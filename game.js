@@ -1,4 +1,4 @@
-// Meta-T Online Challenge–Frustration Experiment v0.2.1 Consent + Data Collection
+// Meta-T Online Challenge–Frustration Experiment v0.2.3 No Grid
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
 
@@ -118,7 +118,7 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.2.1",
+        experiment_version: "0.2.3",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -148,11 +148,14 @@ class TetrisGame {
     this.lastTick = performance.now();
     this.animationId = null;
     this.keys = {};
+    this.softDropHeld = false;
+    this.softDropRepeatTimer = null;
     this.resetBoard(true);
     this.setupInput();
   }
 
   resetBoard(resetConditionStats=false) {
+    this.stopHeldSoftDrop();
     this.board = Array.from({length:this.boardHeight}, () => Array(this.boardWidth).fill(0));
     this.currentPiece = this.createPiece();
     this.nextPiece = this.createPiece();
@@ -182,31 +185,62 @@ class TetrisGame {
     };
   }
 
+  stopHeldSoftDrop() {
+    this.softDropHeld = false;
+    if (this.softDropRepeatTimer) {
+      clearInterval(this.softDropRepeatTimer);
+      this.softDropRepeatTimer = null;
+    }
+  }
+
   setupInput() {
     window.addEventListener("keydown", e => {
       if (!["practice","play"].includes(this.phase)) return;
       if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","Spacebar"].includes(e.key) || e.code === "Space") {
         e.preventDefault();
       }
-      if (e.repeat) return;
 
       // EEG-comparable controls: Space/hard drop is deliberately disabled.
       if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
-        this.logger.event("disabled_hard_drop_key", this, { key: "Space" });
+        if (!e.repeat) this.logger.event("disabled_hard_drop_key", this, { key: "Space" });
         return;
       }
 
+      // ArrowDown: one immediate soft drop, then controlled continuous soft drop while held.
+      if (e.key === "ArrowDown") {
+        if (e.repeat || this.softDropHeld) return;
+        this.softDropHeld = true;
+        this.keypresses++;
+        this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
+        this.softDrop("participant");
+        this.softDropRepeatTimer = setInterval(() => {
+          if (!this.softDropHeld || !["practice","play"].includes(this.phase)) {
+            this.stopHeldSoftDrop();
+            return;
+          }
+          this.softDrop("participant_held");
+        }, 50);
+        return;
+      }
+
+      if (e.repeat) return;
       this.keypresses++;
       this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
       if (e.key === "ArrowLeft") this.movePiece(-1);
       else if (e.key === "ArrowRight") this.movePiece(1);
       else if (e.key === "ArrowUp") this.rotatePiece();
-      else if (e.key === "ArrowDown") this.softDrop("participant");
     });
 
+    window.addEventListener("keyup", e => {
+      if (e.key === "ArrowDown") this.stopHeldSoftDrop();
+    });
+    window.addEventListener("blur", () => this.stopHeldSoftDrop());
+
     document.addEventListener("visibilitychange", () => {
-      if (document.hidden) this.logger.event("focus_lost", this);
-      else this.logger.event("focus_regained", this);
+      if (document.hidden) {
+        this.stopHeldSoftDrop();
+        this.logger.event("focus_lost", this);
+      } else this.logger.event("focus_regained", this);
     });
   }
 
@@ -268,17 +302,29 @@ class TetrisGame {
   endCondition() {
     const c = EXPERIMENT.conditions[this.conditionIndex];
     this.logger.event("condition_end", this);
+    const conditionEvents = this.logger.events.filter(e => e.condition === c.id && e.phase === "play");
+    const countEvent = name => conditionEvents.filter(e => e.event === name).length;
+    const startedAt = this.conditionStartedAt ? new Date(this.conditionStartedAt).toISOString() : "";
+    const endedAt = new Date().toISOString();
     this.logger.conditionSummaries.push({
       participant_id: this.logger.participantId,
       session_id: this.logger.sessionId,
       condition: c.id,
       drop_interval_ms: c.dropIntervalMs,
+      condition_duration_ms: this.conditionStartedAt ? Date.now() - this.conditionStartedAt : EXPERIMENT.conditionDurationMs,
       score: this.score,
       lines_cleared: this.lines,
       pieces_placed: this.piecesPlaced,
       keypresses: this.keypresses,
+      left_right_moves: countEvent("move_left") + countEvent("move_right"),
+      rotations: countEvent("rotate"),
+      soft_drops: countEvent("soft_drop"),
       game_overs: this.gameOvers,
-      attempts: this.attempt
+      attempts: this.attempt,
+      challenge_rating: "",
+      frustration_rating: "",
+      started_at: startedAt,
+      ended_at: endedAt
     });
     this.logger.checkpoint("condition_end");
     this.phase = "rating";
@@ -301,6 +347,11 @@ class TetrisGame {
       challenge_rating: Number(challenge),
       frustration_rating: Number(frustration)
     });
+    const summary = this.logger.conditionSummaries.find(s => s.condition === c.id);
+    if (summary) {
+      summary.challenge_rating = Number(challenge);
+      summary.frustration_rating = Number(frustration);
+    }
     this.logger.checkpoint("rating_response");
 
     this.conditionIndex++;
@@ -459,10 +510,6 @@ class TetrisGame {
     for (let r=0;r<this.boardHeight;r++) for (let c=0;c<this.boardWidth;c++) {
       if (this.board[r][c]) this.drawBlock(this.ctx,c,r,this.board[r][c],this.blockSize);
     }
-    this.ctx.strokeStyle="rgba(255,255,255,.08)";
-    this.ctx.lineWidth=.5;
-    for(let i=0;i<=this.boardWidth;i++){this.ctx.beginPath();this.ctx.moveTo(i*this.blockSize,0);this.ctx.lineTo(i*this.blockSize,this.canvas.height);this.ctx.stroke();}
-    for(let i=0;i<=this.boardHeight;i++){this.ctx.beginPath();this.ctx.moveTo(0,i*this.blockSize);this.ctx.lineTo(this.canvas.width,i*this.blockSize);this.ctx.stroke();}
     this.drawPiece(this.currentPiece);
     this.drawNext();
   }
