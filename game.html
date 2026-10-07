@@ -26,7 +26,7 @@
             border-radius: 12px;
             box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
             padding: 20px;
-            max-width: 1000px;
+            max-width: 1200px;
             width: 100%;
         }
         
@@ -63,8 +63,16 @@
         
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 200px;
-            gap: 20px;
+            grid-template-columns: auto 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .game-board-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
         }
         
         #gameCanvas {
@@ -72,8 +80,9 @@
             background: #1a1a2e;
             display: block;
             border-radius: 6px;
-            width: 100%;
-            height: 400px;
+            width: 300px;
+            height: 600px;
+            image-rendering: pixelated;
         }
         
         .sidebar {
@@ -88,6 +97,7 @@
             border-radius: 6px;
             padding: 15px;
             color: #fff;
+            min-width: 180px;
         }
         
         .stats-label {
@@ -98,19 +108,25 @@
         }
         
         .stats-value {
-            font-size: 28px;
+            font-size: 32px;
             font-weight: bold;
             color: #0f3460;
         }
         
-        #nextPieceCanvas {
+        .next-piece-box {
+            background: #1a1a2e;
             border: 2px solid #0f3460;
+            border-radius: 6px;
+            padding: 15px;
+        }
+        
+        #nextPieceCanvas {
+            border: 1px solid #333;
             background: #0a0a0e;
             display: block;
-            width: 100%;
+            width: 150px;
             height: 100px;
-            border-radius: 6px;
-            margin-top: 10px;
+            border-radius: 4px;
         }
         
         .controls {
@@ -121,7 +137,7 @@
         }
         
         button {
-            padding: 10px;
+            padding: 12px;
             background: #0f3460;
             color: white;
             border: none;
@@ -129,7 +145,7 @@
             cursor: pointer;
             font-weight: 600;
             transition: all 0.3s ease;
-            font-size: 12px;
+            font-size: 13px;
             text-transform: uppercase;
         }
         
@@ -149,15 +165,16 @@
             border: 2px solid #0f3460;
             border-radius: 6px;
             padding: 15px;
-            margin-top: 20px;
+            margin-top: 10px;
         }
         
         .settings-label {
             color: #aaa;
-            font-size: 12px;
+            font-size: 11px;
             text-transform: uppercase;
             margin-bottom: 10px;
             display: block;
+            font-weight: 600;
         }
         
         .checkbox-group {
@@ -321,13 +338,14 @@
             color: #99ff99;
         }
         
-        @media (max-width: 800px) {
+        @media (max-width: 900px) {
             .main-content {
                 grid-template-columns: 1fr;
             }
             
             #gameCanvas {
-                height: 300px;
+                width: 250px;
+                height: 500px;
             }
             
             .game-header {
@@ -354,8 +372,12 @@
         <div id="statusMessage" class="status-message" style="display: none;"></div>
         
         <div class="main-content">
-            <div>
-                <canvas id="gameCanvas" width="400" height="400"></canvas>
+            <div class="game-board-wrapper">
+                <canvas id="gameCanvas" width="300" height="600"></canvas>
+                <div class="controls">
+                    <button id="startBtn">Start Game</button>
+                    <button id="resetBtn">Reset</button>
+                </div>
             </div>
             
             <div class="sidebar">
@@ -374,13 +396,13 @@
                     <div class="stats-value" id="lines">0</div>
                 </div>
                 
-                <div class="stats-box">
+                <div class="next-piece-box">
                     <div class="stats-label">Next Piece</div>
                     <canvas id="nextPieceCanvas" width="150" height="100"></canvas>
                 </div>
                 
                 <div class="settings">
-                    <label class="settings-label">Options</label>
+                    <label class="settings-label">Display Options</label>
                     <div class="checkbox-group">
                         <input type="checkbox" id="ghostPiece" checked>
                         <label for="ghostPiece">Ghost Piece</label>
@@ -391,11 +413,6 @@
                         <option value="fast">Fast</option>
                         <option value="slow">Slow</option>
                     </select>
-                </div>
-                
-                <div class="controls">
-                    <button id="startBtn">Start Game</button>
-                    <button id="resetBtn">Reset</button>
                 </div>
             </div>
         </div>
@@ -458,14 +475,16 @@
             document.getElementById('displayParticipantId').textContent = participantId;
             
             // Initialize telemetry system
-            window.telemetrySystem = new TelemetrySystem(participantId);
-            window.telemetrySystem.initialize().then(function() {
-                console.log('Telemetry system initialized for participant:', participantId);
-                showStatus('Connected to data sync service', 'success');
-            }).catch(function(error) {
-                console.error('Telemetry initialization error:', error);
-                showStatus('Warning: Data sync unavailable. Game will continue with local storage.', 'error');
-            });
+            if (typeof TelemetrySystem !== 'undefined') {
+                window.telemetrySystem = new TelemetrySystem(participantId);
+                window.telemetrySystem.initialize().then(function() {
+                    console.log('Telemetry system initialized for participant:', participantId);
+                    showStatus('Connected to data sync service', 'success');
+                }).catch(function(error) {
+                    console.error('Telemetry initialization error:', error);
+                    showStatus('Warning: Data sync unavailable. Game will continue with local storage.', 'error');
+                });
+            }
         });
         
         function showStatus(message, type = 'info') {
