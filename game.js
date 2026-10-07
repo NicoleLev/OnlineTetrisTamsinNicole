@@ -1,4 +1,4 @@
-// Meta-T Online Challenge–Frustration Experiment v0.1
+// Meta-T Online Challenge–Frustration Experiment v0.1.2
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
 
@@ -59,7 +59,7 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.1",
+        experiment_version: "0.1.2",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -89,7 +89,7 @@ class TetrisGame {
     this.lastTick = performance.now();
     this.animationId = null;
     this.keys = {};
-    this.showGhost = true;
+    this.showGhost = false;
     this.resetBoard(true);
     this.setupInput();
   }
@@ -127,7 +127,7 @@ class TetrisGame {
   setupInput() {
     window.addEventListener("keydown", e => {
       if (!["practice","play"].includes(this.phase)) return;
-      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," "].includes(e.key)) e.preventDefault();
+      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
       if (e.repeat) return;
       this.keypresses++;
       this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
@@ -135,7 +135,6 @@ class TetrisGame {
       else if (e.key === "ArrowRight") this.movePiece(1);
       else if (e.key === "ArrowUp") this.rotatePiece();
       else if (e.key === "ArrowDown") this.softDrop("participant");
-      else if (e.key === " ") this.hardDrop();
     });
 
     document.addEventListener("visibilitychange", () => {
@@ -290,14 +289,6 @@ class TetrisGame {
     }
   }
 
-  hardDrop() {
-    let cells = 0;
-    while (!this.collision()) { this.currentPiece.y++; cells++; }
-    this.currentPiece.y--; cells--;
-    this.logger.event("hard_drop", this, { piece:this.currentPiece.type, cells:Math.max(0,cells) });
-    this.placePiece();
-  }
-
   collision() {
     const {shape,x,y} = this.currentPiece;
     for (let r=0; r<shape.length; r++) for (let c=0; c<shape[r].length; c++) {
@@ -330,6 +321,16 @@ class TetrisGame {
     this.clearLines();
     this.currentPiece=this.nextPiece;
     this.nextPiece=this.createPiece();
+
+    // A top-out occurs when the newly spawned piece cannot legally occupy
+    // its starting position. The previous prototype only checked for blocks
+    // above the board while locking a piece, so overlapping spawn pieces
+    // could continue indefinitely at the top.
+    if (this.collision()) {
+      this.handleGameOver();
+      return;
+    }
+
     this.logger.event("piece_spawn", this, { piece:this.currentPiece.type });
   }
 
@@ -354,6 +355,18 @@ class TetrisGame {
   handleGameOver() {
     this.gameOvers++;
     this.logger.event("game_over", this);
+
+    // Tell the participant what happened, but do not end the experimental
+    // condition. The board is reset and play continues at the same speed.
+    const notice = document.getElementById("gameOverNotice");
+    if (notice) {
+      notice.classList.remove("hidden");
+      clearTimeout(this.gameOverNoticeTimer);
+      this.gameOverNoticeTimer = setTimeout(() => {
+        notice.classList.add("hidden");
+      }, 1200);
+    }
+
     this.attempt++;
     this.resetBoard(false);
     this.logger.event("restart", this);

@@ -1,4 +1,4 @@
-# Meta-T Challenge–Frustration Online Experiment — v0.1
+# Meta-T Challenge–Frustration Online Experiment — v0.1.2
 
 This folder is a first research prototype based on the browser `game.js` supplied in `OnlineTetrisTamsinNicole-main`.
 
@@ -62,3 +62,25 @@ v0.1 is a local prototype, **not yet a deployable participant study**. Before da
 - `index.html` — study screens and rating UI
 - `experiment.css` — presentation
 - `game.js` — Tetris, experiment controller and telemetry
+
+## v0.1.1 bug fix
+
+- Correctly detects a top-out when a newly spawned tetromino overlaps the occupied board.
+- Shows a brief **Game over — New attempt, same difficulty condition** message.
+- Automatically clears the board and continues the same timed condition.
+- The game-over and restart events remain in the telemetry.
+
+
+## v0.1.2 EEG-comparability changes
+
+Following gameplay testing against the EEG task:
+
+- **Next-piece preview remains enabled.**
+- **Ghost/landing preview (Ghost Zoid) is disabled.**
+- **Hard drop / Space-bar instant drop is removed.**
+- **Soft drop with the Down arrow remains enabled.**
+- Line clears continue to affect score/telemetry but **do not change falling speed**.
+- Falling speed remains controlled only by the predefined experimental condition.
+- The v0.1.1 automatic game-over detection and within-condition restart are retained.
+
+The nine condition speeds and five-minute durations are still placeholders for piloting rather than final study parameters.

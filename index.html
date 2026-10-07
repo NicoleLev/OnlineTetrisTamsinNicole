@@ -11,7 +11,7 @@
   <section id="welcomeScreen" class="screen card">
     <h1>Meta-T Research Prototype</h1>
     <p>Participant ID: <code id="participantId"></code></p>
-    <p>This is development version 0.1. It contains a practice period followed by nine fixed-duration difficulty conditions.</p>
+    <p>This is development version 0.1.2. It contains a practice period followed by nine fixed-duration difficulty conditions.</p>
     <button id="practiceBtn">Start practice</button>
   </section>
 
@@ -23,7 +23,13 @@
 
   <section id="gameScreen" class="screen hidden">
     <div class="game-layout">
-      <canvas id="gameCanvas" width="300" height="600"></canvas>
+      <div class="board-wrap">
+        <canvas id="gameCanvas" width="300" height="600"></canvas>
+        <div id="gameOverNotice" class="game-over-notice hidden" role="status" aria-live="polite">
+          <strong>Game over</strong>
+          <span>New attempt — same difficulty condition</span>
+        </div>
+      </div>
       <aside class="card stats">
         <h2>Study</h2>
         <div>Condition <strong id="condition">—</strong></div>
@@ -35,7 +41,7 @@
         <div>Attempt <strong id="attempt">1</strong></div>
         <h3>Next</h3>
         <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
-        <p class="small">← → move · ↑ rotate · ↓ soft drop · Space hard drop</p>
+        <p class="small">← → move · ↑ rotate · ↓ soft drop</p>
       </aside>
     </div>
   </section>
@@ -77,7 +83,7 @@
 
   <section id="completeScreen" class="screen card hidden">
     <h1>Gameplay complete</h1>
-    <p>The post-play questionnaire (CORGIS + NASA-TLX) is intentionally not hard-coded in v0.1. The validated wording/scoring should be confirmed before implementation.</p>
+    <p>The post-play questionnaire (CORGIS + NASA-TLX) is intentionally not hard-coded in v0.1.2. The validated wording/scoring should be confirmed before implementation.</p>
     <p>For development testing only, download the locally recorded telemetry below.</p>
     <button id="downloadBtn">Download test data</button>
   </section>
