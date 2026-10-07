@@ -84,3 +84,17 @@ Following gameplay testing against the EEG task:
 - The v0.1.1 automatic game-over detection and within-condition restart are retained.
 
 The nine condition speeds and five-minute durations are still placeholders for piloting rather than final study parameters.
+
+
+## v0.1.2 hotfix after live GitHub Pages test
+
+This hotfix addresses the live behaviour seen after the first v0.1.2 upload:
+
+- Ghost/landing-preview code is now removed from rendering entirely, not merely switched off.
+- Space is explicitly intercepted during gameplay and performs no gameplay action.
+- Hard-drop code remains absent.
+- Top-out detection is strengthened: occupation of the spawn zone after locking a piece triggers game over, in addition to spawn-collision detection.
+- Game over automatically resets the board and starts a new attempt in the same condition.
+- `index.html` now loads `game.js?v=0.1.2-hotfix` to force GitHub Pages/browsers to fetch the corrected JavaScript instead of a cached older `game.js`.
+- Next-piece preview remains enabled.
+- Soft drop remains enabled.

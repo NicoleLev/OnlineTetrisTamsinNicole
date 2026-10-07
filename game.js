@@ -1,4 +1,4 @@
-// Meta-T Online Challenge–Frustration Experiment v0.1.2
+// Meta-T Online Challenge–Frustration Experiment v0.1.2-hotfix
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
 
@@ -59,7 +59,7 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.1.2",
+        experiment_version: "0.1.2-hotfix",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -89,7 +89,6 @@ class TetrisGame {
     this.lastTick = performance.now();
     this.animationId = null;
     this.keys = {};
-    this.showGhost = false;
     this.resetBoard(true);
     this.setupInput();
   }
@@ -127,8 +126,17 @@ class TetrisGame {
   setupInput() {
     window.addEventListener("keydown", e => {
       if (!["practice","play"].includes(this.phase)) return;
-      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"].includes(e.key)) e.preventDefault();
+      if (["ArrowLeft","ArrowRight","ArrowUp","ArrowDown"," ","Spacebar"].includes(e.key) || e.code === "Space") {
+        e.preventDefault();
+      }
       if (e.repeat) return;
+
+      // EEG-comparable controls: Space/hard drop is deliberately disabled.
+      if (e.code === "Space" || e.key === " " || e.key === "Spacebar") {
+        this.logger.event("disabled_hard_drop_key", this, { key: "Space" });
+        return;
+      }
+
       this.keypresses++;
       this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
       if (e.key === "ArrowLeft") this.movePiece(-1);
@@ -319,10 +327,18 @@ class TetrisGame {
       decision_time_ms: Math.round(performance.now()-this.currentPiece.spawnedAt)
     });
     this.clearLines();
+
+    // Robust top-out check. If blocks remain in the spawn zone after the
+    // placement/line-clear step, end this attempt immediately.
+    if (this.board[0].some(cell => cell !== 0) || this.board[1].some(cell => cell !== 0)) {
+      this.handleGameOver();
+      return;
+    }
+
     this.currentPiece=this.nextPiece;
     this.nextPiece=this.createPiece();
 
-    // A top-out occurs when the newly spawned piece cannot legally occupy
+    // A top-out also occurs when the newly spawned piece cannot legally occupy
     // its starting position. The previous prototype only checked for blocks
     // above the board while locking a piece, so overlapping spawn pieces
     // could continue indefinitely at the top.
@@ -372,20 +388,6 @@ class TetrisGame {
     this.logger.event("restart", this);
   }
 
-  wouldCollide(piece) {
-    const saved=this.currentPiece;
-    this.currentPiece=piece;
-    const result=this.collision();
-    this.currentPiece=saved;
-    return result;
-  }
-
-  getGhostPiece() {
-    const g=JSON.parse(JSON.stringify(this.currentPiece));
-    while (!this.wouldCollide(g)) g.y++;
-    g.y--;
-    return g;
-  }
 
   draw() {
     this.ctx.fillStyle="#111827";
@@ -397,10 +399,6 @@ class TetrisGame {
     this.ctx.lineWidth=.5;
     for(let i=0;i<=this.boardWidth;i++){this.ctx.beginPath();this.ctx.moveTo(i*this.blockSize,0);this.ctx.lineTo(i*this.blockSize,this.canvas.height);this.ctx.stroke();}
     for(let i=0;i<=this.boardHeight;i++){this.ctx.beginPath();this.ctx.moveTo(0,i*this.blockSize);this.ctx.lineTo(this.canvas.width,i*this.blockSize);this.ctx.stroke();}
-    if (this.showGhost) {
-      const g=this.getGhostPiece();
-      this.ctx.globalAlpha=.2; this.drawPiece(g); this.ctx.globalAlpha=1;
-    }
     this.drawPiece(this.currentPiece);
     this.drawNext();
   }
