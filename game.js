@@ -1,4 +1,4 @@
-// Meta-T Online Challenge–Frustration Experiment v0.2.3 No Grid
+// Meta-T Online Challenge–Frustration Experiment v0.2.4 Soft-Drop Telemetry
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
 
@@ -118,7 +118,7 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.2.3",
+        experiment_version: "0.2.4",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -185,11 +185,15 @@ class TetrisGame {
     };
   }
 
-  stopHeldSoftDrop() {
+  stopHeldSoftDrop(logEnd=false) {
+    const wasHeld = this.softDropHeld;
     this.softDropHeld = false;
     if (this.softDropRepeatTimer) {
       clearInterval(this.softDropRepeatTimer);
       this.softDropRepeatTimer = null;
+    }
+    if (logEnd && wasHeld && ["practice","play"].includes(this.phase)) {
+      this.logger.event("soft_drop_end", this, { piece:this.currentPiece.type, y:this.currentPiece.y });
     }
   }
 
@@ -212,6 +216,7 @@ class TetrisGame {
         this.softDropHeld = true;
         this.keypresses++;
         this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
+        this.logger.event("soft_drop_start", this, { piece:this.currentPiece.type, y:this.currentPiece.y });
         this.softDrop("participant");
         this.softDropRepeatTimer = setInterval(() => {
           if (!this.softDropHeld || !["practice","play"].includes(this.phase)) {
@@ -232,7 +237,7 @@ class TetrisGame {
     });
 
     window.addEventListener("keyup", e => {
-      if (e.key === "ArrowDown") this.stopHeldSoftDrop();
+      if (e.key === "ArrowDown") this.stopHeldSoftDrop(true);
     });
     window.addEventListener("blur", () => this.stopHeldSoftDrop());
 
@@ -407,7 +412,9 @@ class TetrisGame {
       this.currentPiece.y--;
       this.placePiece();
     } else if (source === "participant") {
-      this.logger.event("soft_drop", this, { piece:this.currentPiece.type, y:this.currentPiece.y });
+      this.logger.event("soft_drop", this, { piece:this.currentPiece.type, y:this.currentPiece.y, input_mode:"initial_press" });
+    } else if (source === "participant_held") {
+      this.logger.event("soft_drop_repeat", this, { piece:this.currentPiece.type, y:this.currentPiece.y, input_mode:"held" });
     }
   }
 
