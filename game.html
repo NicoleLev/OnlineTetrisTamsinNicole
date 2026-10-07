@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meta-T Challenge–Frustration Study</title>
+  <link rel="stylesheet" href="experiment.css">
+</head>
+<body>
+<main>
+  <section id="welcomeScreen" class="screen card">
+    <h1>Meta-T Research Prototype</h1>
+    <p>Participant ID: <code id="participantId"></code></p>
+    <p>This is development version 0.2.1 consent + data collection. It contains a practice period followed by nine fixed-duration difficulty conditions.</p>
+    <button id="practiceBtn">Start practice</button>
+  </section>
+
+  <section id="experimentIntro" class="screen card hidden">
+    <h1>Practice complete</h1>
+    <p>The experiment contains nine conditions. Each condition uses a predefined falling speed. After each condition you will answer two brief questions.</p>
+    <button id="startExperimentBtn">Start experiment</button>
+  </section>
+
+  <section id="gameScreen" class="screen hidden">
+    <div class="game-layout">
+      <div class="board-wrap">
+        <canvas id="gameCanvas" width="300" height="600"></canvas>
+        <div id="gameOverNotice" class="game-over-notice hidden" role="status" aria-live="polite">
+          <strong>Game over</strong>
+          <span>New attempt — same difficulty condition</span>
+        </div>
+      </div>
+      <aside class="card stats">
+        <h2>Study</h2>
+        <div>Condition <strong id="condition">—</strong></div>
+        <div>Time <strong id="timer">—</strong></div>
+        <div>Drop interval <strong id="speed">—</strong></div>
+        <hr>
+        <div>Score <strong id="score">0</strong></div>
+        <div>Lines <strong id="lines">0</strong></div>
+        <div>Attempt <strong id="attempt">1</strong></div>
+        <h3>Next</h3>
+        <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
+        <p class="small">← → move · ↑ rotate · ↓ soft drop</p>
+      </aside>
+    </div>
+  </section>
+
+  <section id="ratingScreen" class="screen card hidden">
+    <h1>Condition <span id="ratingCondition"></span> complete</h1>
+    <form id="ratingForm">
+      <fieldset>
+        <legend>How challenging did you find that condition?</legend>
+        <div class="scale">
+          <span>Not at all</span>
+          <label>1<input required type="radio" name="challenge" value="1"></label>
+          <label>2<input type="radio" name="challenge" value="2"></label>
+          <label>3<input type="radio" name="challenge" value="3"></label>
+          <label>4<input type="radio" name="challenge" value="4"></label>
+          <label>5<input type="radio" name="challenge" value="5"></label>
+          <label>6<input type="radio" name="challenge" value="6"></label>
+          <label>7<input type="radio" name="challenge" value="7"></label>
+          <span>Extremely</span>
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend>How frustrated did you feel during that condition?</legend>
+        <div class="scale">
+          <span>Not at all</span>
+          <label>1<input required type="radio" name="frustration" value="1"></label>
+          <label>2<input type="radio" name="frustration" value="2"></label>
+          <label>3<input type="radio" name="frustration" value="3"></label>
+          <label>4<input type="radio" name="frustration" value="4"></label>
+          <label>5<input type="radio" name="frustration" value="5"></label>
+          <label>6<input type="radio" name="frustration" value="6"></label>
+          <label>7<input type="radio" name="frustration" value="7"></label>
+          <span>Extremely</span>
+        </div>
+      </fieldset>
+      <button type="submit">Continue</button>
+    </form>
+  </section>
+
+  <section id="completeScreen" class="screen card hidden">
+    <h1>Gameplay complete</h1>
+    <p>The post-play questionnaire (CORGIS + NASA-TLX) is intentionally not hard-coded in v0.1.2. The validated wording/scoring should be confirmed before implementation.</p>
+    <p>For development testing only, download the locally recorded telemetry below.</p>
+    <button id="downloadBtn">Download test data</button>
+  </section>
+</main>
+<script src="game.js?v=0.2.1-consent-data"></script>
+</body>
+</html>

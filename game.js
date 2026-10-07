@@ -1,6 +1,43 @@
-// Meta-T Online Challenge–Frustration Experiment v0.1.2-hotfix
+// Meta-T Online Challenge–Frustration Experiment v0.2.1 Consent + Data Collection
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
+
+
+const DATA_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx8J8GSpEidx-WarHNmS7_Ko4eBpFFLJMgcDq758dzrWQX83I6eor9jK8YBNWW3GhnptA/exec";
+const DATA_UPLOAD_VERSION = "0.2";
+
+function makeParticipantId() {
+  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const bytes = new Uint8Array(8);
+  crypto.getRandomValues(bytes);
+  return "PPT-" + Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+}
+function getParticipantId() {
+  const id = sessionStorage.getItem("participantId") ||
+             sessionStorage.getItem("meta_t_ppt_id_v02");
+  if (!id || !/^PPT-[A-Z0-9]{8}$/.test(id)) {
+    window.location.replace("index.html");
+    throw new Error("No valid consent-linked participant ID.");
+  }
+  sessionStorage.setItem("participantId", id);
+  sessionStorage.setItem("meta_t_ppt_id_v02", id);
+  return id;
+}
+function makeSessionId() {
+  const stamp=new Date().toISOString().replace(/[-:.TZ]/g,"").slice(0,14);
+  const rnd=crypto.randomUUID().replace(/-/g,"").slice(0,8).toUpperCase();
+  return `SESSION-${stamp}_${rnd}`;
+}
+async function sendCheckpoint(payload) {
+  const body=JSON.stringify(payload);
+  localStorage.setItem("meta_t_unsent_checkpoint_v02",body);
+  await fetch(DATA_BACKEND_URL,{
+    method:"POST", mode:"no-cors",
+    headers:{"Content-Type":"text/plain;charset=utf-8"},
+    body
+  });
+  localStorage.removeItem("meta_t_unsent_checkpoint_v02");
+}
 
 const EXPERIMENT = {
   conditionDurationMs: 5 * 60 * 1000,
@@ -31,9 +68,9 @@ const PIECES = {
 
 class ExperimentLogger {
   constructor() {
-    const params = new URLSearchParams(window.location.search);
-    this.participantId = params.get("PROLIFIC_PID") || params.get("participant") || crypto.randomUUID();
-    this.sessionId = crypto.randomUUID();
+    this.participantId = getParticipantId();
+    this.sessionId = makeSessionId();
+    this.sessionStartedAt = new Date().toISOString();
     this.events = [];
     this.conditionSummaries = [];
     this.ratings = [];
@@ -54,12 +91,34 @@ class ExperimentLogger {
       ...extra
     });
   }
+  async checkpoint(checkpointType="checkpoint") {
+    const payload = {
+      upload_version: DATA_UPLOAD_VERSION,
+      checkpoint_type: checkpointType,
+      participant_id: this.participantId,
+      session_id: this.sessionId,
+      session_started_at: this.sessionStartedAt,
+      sent_at: new Date().toISOString(),
+      user_agent: navigator.userAgent,
+      page_url: location.href,
+      events: this.events,
+      condition_summaries: this.conditionSummaries,
+      ratings: this.ratings
+    };
+    try {
+      await sendCheckpoint(payload);
+      return true;
+    } catch(err) {
+      console.error("Checkpoint upload failed; local fallback retained.",err);
+      return false;
+    }
+  }
   exportAll() {
     downloadJSON("meta_t_experiment_data.json", {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.1.2-hotfix",
+        experiment_version: "0.2.1",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -201,6 +260,7 @@ class TetrisGame {
 
   endPractice() {
     this.logger.event("practice_end", this);
+    this.logger.checkpoint("practice_end");
     this.phase = "idle";
     showScreen("experimentIntro");
   }
@@ -220,6 +280,7 @@ class TetrisGame {
       game_overs: this.gameOvers,
       attempts: this.attempt
     });
+    this.logger.checkpoint("condition_end");
     this.phase = "rating";
     showRating(c.id);
     this.logger.event("rating_start", this);
@@ -240,6 +301,7 @@ class TetrisGame {
       challenge_rating: Number(challenge),
       frustration_rating: Number(frustration)
     });
+    this.logger.checkpoint("rating_response");
 
     this.conditionIndex++;
     if (this.conditionIndex < EXPERIMENT.conditions.length) {
@@ -247,6 +309,7 @@ class TetrisGame {
       this.startCondition();
     } else {
       this.phase = "complete";
+      this.logger.checkpoint("study_complete");
       showScreen("completeScreen");
     }
   }
@@ -371,6 +434,7 @@ class TetrisGame {
   handleGameOver() {
     this.gameOvers++;
     this.logger.event("game_over", this);
+    this.logger.checkpoint("game_over");
 
     // Tell the participant what happened, but do not end the experimental
     // condition. The board is reset and play continues at the same speed.
@@ -452,8 +516,15 @@ function downloadJSON(filename,data){
 
 let game, logger;
 document.addEventListener("DOMContentLoaded",()=>{
+  if (sessionStorage.getItem("consentGiven") !== "true") {
+    window.location.replace("index.html");
+    return;
+  }
   logger=new ExperimentLogger();
   game=new TetrisGame(document.getElementById("gameCanvas"),document.getElementById("nextPieceCanvas"),logger);
+  setInterval(()=> {
+    if (game && ["practice","play","rating"].includes(game.phase)) logger.checkpoint("periodic_30s");
+  },30000);
   setText("participantId",logger.participantId);
 
   document.getElementById("practiceBtn").onclick=()=>{showScreen("gameScreen");game.startPractice();};
@@ -465,4 +536,20 @@ document.addEventListener("DOMContentLoaded",()=>{
   };
   document.getElementById("downloadBtn").onclick=()=>logger.exportAll();
   showScreen("welcomeScreen");
+});
+
+window.addEventListener("pagehide",()=>{
+  try {
+    if(!logger) return;
+    const payload={
+      upload_version:DATA_UPLOAD_VERSION, checkpoint_type:"pagehide",
+      participant_id:logger.participantId, session_id:logger.sessionId,
+      session_started_at:logger.sessionStartedAt, sent_at:new Date().toISOString(),
+      user_agent:navigator.userAgent, page_url:location.href,
+      events:logger.events, condition_summaries:logger.conditionSummaries, ratings:logger.ratings
+    };
+    const body=JSON.stringify(payload);
+    localStorage.setItem("meta_t_unsent_checkpoint_v02",body);
+    navigator.sendBeacon(DATA_BACKEND_URL,new Blob([body],{type:"text/plain;charset=UTF-8"}));
+  } catch(e) {}
 });

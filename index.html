@@ -1,93 +1,371 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Meta-T Challenge–Frustration Study</title>
-  <link rel="stylesheet" href="experiment.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Meta-T Research Platform - Consent Form</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+            padding: 40px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #0f3460;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #0f3460;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        
+        .header p {
+            color: #666;
+            font-size: 16px;
+        }
+        
+        .content {
+            color: #333;
+            line-height: 1.8;
+        }
+        
+        .section {
+            margin-bottom: 25px;
+        }
+        
+        .section-title {
+            color: #0f3460;
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .section-content {
+            color: #555;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+        
+        .section-content ul, .section-content ol {
+            margin-left: 25px;
+            margin-top: 10px;
+        }
+        
+        .section-content li {
+            margin-bottom: 8px;
+        }
+        
+        .participant-id-box {
+            background: #f5f5f5;
+            border-left: 4px solid #0f3460;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 6px;
+        }
+        
+        .participant-id-box p {
+            color: #333;
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+        
+        .id-display {
+            background: white;
+            border: 2px solid #0f3460;
+            padding: 12px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            font-weight: bold;
+            color: #0f3460;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .id-note {
+            font-size: 13px;
+            color: #666;
+            margin-top: 10px;
+            font-style: italic;
+        }
+        
+        .contact-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 6px;
+            margin: 20px 0;
+        }
+        
+        .contact-section p {
+            margin-bottom: 10px;
+            font-size: 14px;
+            color: #555;
+        }
+        
+        .contact-section strong {
+            color: #0f3460;
+        }
+        
+        .consent-checkbox {
+            display: flex;
+            align-items: flex-start;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f0f7ff;
+            border-radius: 6px;
+            border: 2px solid #0f3460;
+        }
+        
+        .consent-checkbox input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-top: 3px;
+            margin-right: 15px;
+            cursor: pointer;
+            accent-color: #0f3460;
+            flex-shrink: 0;
+        }
+        
+        .consent-checkbox label {
+            cursor: pointer;
+            font-size: 15px;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .button-container {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+            justify-content: center;
+        }
+        
+        button {
+            padding: 12px 40px;
+            font-size: 16px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        #continueBtn {
+            background: #0f3460;
+            color: white;
+            flex: 1;
+            max-width: 300px;
+        }
+        
+        #continueBtn:hover:not(:disabled) {
+            background: #1a4d7a;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(15, 52, 96, 0.3);
+        }
+        
+        #continueBtn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+        
+        #declineBtn {
+            background: #e0e0e0;
+            color: #333;
+            flex: 1;
+            max-width: 300px;
+        }
+        
+        #declineBtn:hover {
+            background: #c0c0c0;
+            transform: translateY(-2px);
+        }
+        
+        .footer-note {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 12px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        
+        @media (max-width: 600px) {
+            .container {
+                padding: 25px;
+            }
+            
+            .header h1 {
+                font-size: 22px;
+            }
+            
+            .button-container {
+                flex-direction: column-reverse;
+            }
+            
+            button {
+                max-width: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<main>
-  <section id="welcomeScreen" class="screen card">
-    <h1>Meta-T Research Prototype</h1>
-    <p>Participant ID: <code id="participantId"></code></p>
-    <p>This is development version 0.1.2 hotfix. It contains a practice period followed by nine fixed-duration difficulty conditions.</p>
-    <button id="practiceBtn">Start practice</button>
-  </section>
-
-  <section id="experimentIntro" class="screen card hidden">
-    <h1>Practice complete</h1>
-    <p>The experiment contains nine conditions. Each condition uses a predefined falling speed. After each condition you will answer two brief questions.</p>
-    <button id="startExperimentBtn">Start experiment</button>
-  </section>
-
-  <section id="gameScreen" class="screen hidden">
-    <div class="game-layout">
-      <div class="board-wrap">
-        <canvas id="gameCanvas" width="300" height="600"></canvas>
-        <div id="gameOverNotice" class="game-over-notice hidden" role="status" aria-live="polite">
-          <strong>Game over</strong>
-          <span>New attempt — same difficulty condition</span>
+    <div class="container">
+        <div class="header">
+            <h1>Meta-T Research Platform 1.1</h1>
+            <p>Research Participation Consent</p>
         </div>
-      </div>
-      <aside class="card stats">
-        <h2>Study</h2>
-        <div>Condition <strong id="condition">—</strong></div>
-        <div>Time <strong id="timer">—</strong></div>
-        <div>Drop interval <strong id="speed">—</strong></div>
-        <hr>
-        <div>Score <strong id="score">0</strong></div>
-        <div>Lines <strong id="lines">0</strong></div>
-        <div>Attempt <strong id="attempt">1</strong></div>
-        <h3>Next</h3>
-        <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
-        <p class="small">← → move · ↑ rotate · ↓ soft drop</p>
-      </aside>
+        
+        <div class="content">
+            <div class="section">
+                <div class="section-title">Purpose</div>
+                <div class="section-content">
+                    This web application is part of a behavioural research study examining cognitive processes during gameplay.
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">What We Collect</div>
+                <div class="section-content">
+                    <ul>
+                        <li><strong>Gameplay actions</strong> (key presses, timing, piece placements)</li>
+                        <li><strong>Game performance metrics</strong> (scores, lines cleared, levels)</li>
+                        <li><strong>Session timestamps and duration</strong></li>
+                        <li><strong>Questionnaire data</strong> from the following questionnaires: CORGIS and NASA-TLX (both freely available online). Short questions on your experience will appear between each short Tetris game, and the full questionnaires will also appear at the end of the study.</li>
+                        <li><strong>Demographic data:</strong> Handedness, Experience with Tetris, gender</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Data Handling</div>
+                <div class="section-content">
+                    <ul>
+                        <li>Your data is identified only by an anonymous participant ID</li>
+                        <li>No personally identifiable information is collected</li>
+                        <li>Data may be used for academic research and publications</li>
+                        <li>Data is transmitted securely and stored on research servers</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="section">
+                <div class="section-title">Voluntary Participation</div>
+                <div class="section-content">
+                    Your participation is entirely voluntary. You may close this page at any time to decline.
+                </div>
+            </div>
+            
+            <div class="participant-id-box">
+                <p>Your Anonymous Participant ID:</p>
+                <div class="id-display" id="participantId">GENERATING...</div>
+                <div class="id-note">This randomly generated ID will be used to identify your data anonymously.</div>
+            </div>
+            
+            <div class="contact-section">
+                <p><strong>Researchers:</strong></p>
+                <p>This study is run by PhD students Nicole Levermore and Tamsin Isaac.</p>
+                <p>If you have any questions, please contact:</p>
+                <p><strong>Nicole Levermore:</strong> <a href="mailto:nicole.levermore@york.ac.uk">nicole.levermore@york.ac.uk</a></p>
+                <p><strong>Tamsin Isaac:</strong> <a href="mailto:tamsin.isaac@york.ac.uk">tamsin.isaac@york.ac.uk</a></p>
+                <p style="margin-top: 15px;"><strong>Supervisors contact:</strong> <a href="mailto:alex.wade@york.ac.uk">Alex Wade (alex.wade@york.ac.uk)</a></p>
+            </div>
+            
+            <div class="consent-checkbox">
+                <input type="checkbox" id="consentCheckbox">
+                <label for="consentCheckbox">
+                    I have read and understood the above information. I voluntarily agree to participate in this research study and consent to the collection and use of my gameplay data as described.
+                </label>
+            </div>
+            
+            <div class="button-container">
+                <button id="declineBtn">Decline</button>
+                <button id="continueBtn" disabled>Continue to Game</button>
+            </div>
+            
+            <div class="footer-note">
+                Your participation helps advance our understanding of cognitive processes in gameplay.
+            </div>
+        </div>
     </div>
-  </section>
+    
+    <script>
+        // Generate anonymous participant ID
+        function generateParticipantId() {
+            const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+            const bytes = new Uint8Array(8);
+            crypto.getRandomValues(bytes);
+            return "PPT-" + Array.from(bytes, b => alphabet[b % alphabet.length]).join("");
+        }
 
-  <section id="ratingScreen" class="screen card hidden">
-    <h1>Condition <span id="ratingCondition"></span> complete</h1>
-    <form id="ratingForm">
-      <fieldset>
-        <legend>How challenging did you find that condition?</legend>
-        <div class="scale">
-          <span>Not at all</span>
-          <label>1<input required type="radio" name="challenge" value="1"></label>
-          <label>2<input type="radio" name="challenge" value="2"></label>
-          <label>3<input type="radio" name="challenge" value="3"></label>
-          <label>4<input type="radio" name="challenge" value="4"></label>
-          <label>5<input type="radio" name="challenge" value="5"></label>
-          <label>6<input type="radio" name="challenge" value="6"></label>
-          <label>7<input type="radio" name="challenge" value="7"></label>
-          <span>Extremely</span>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>How frustrated did you feel during that condition?</legend>
-        <div class="scale">
-          <span>Not at all</span>
-          <label>1<input required type="radio" name="frustration" value="1"></label>
-          <label>2<input type="radio" name="frustration" value="2"></label>
-          <label>3<input type="radio" name="frustration" value="3"></label>
-          <label>4<input type="radio" name="frustration" value="4"></label>
-          <label>5<input type="radio" name="frustration" value="5"></label>
-          <label>6<input type="radio" name="frustration" value="6"></label>
-          <label>7<input type="radio" name="frustration" value="7"></label>
-          <span>Extremely</span>
-        </div>
-      </fieldset>
-      <button type="submit">Continue</button>
-    </form>
-  </section>
-
-  <section id="completeScreen" class="screen card hidden">
-    <h1>Gameplay complete</h1>
-    <p>The post-play questionnaire (CORGIS + NASA-TLX) is intentionally not hard-coded in v0.1.2. The validated wording/scoring should be confirmed before implementation.</p>
-    <p>For development testing only, download the locally recorded telemetry below.</p>
-    <button id="downloadBtn">Download test data</button>
-  </section>
-</main>
-<script src="game.js?v=0.1.2-hotfix"></script>
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Generate and display participant ID
+            const participantId = generateParticipantId();
+            document.getElementById('participantId').textContent = participantId;
+            
+            // Store participant ID in sessionStorage for use in the game
+            sessionStorage.setItem('participantId', participantId);
+            sessionStorage.setItem('meta_t_ppt_id_v02', participantId);
+            
+            // Consent checkbox handler
+            const consentCheckbox = document.getElementById('consentCheckbox');
+            const continueBtn = document.getElementById('continueBtn');
+            
+            consentCheckbox.addEventListener('change', function() {
+                continueBtn.disabled = !this.checked;
+            });
+            
+            // Continue button handler
+            continueBtn.addEventListener('click', function() {
+                // Mark consent as given
+                sessionStorage.setItem('consentGiven', 'true');
+                // Redirect to game (update path as needed)
+                window.location.href = 'game.html';
+            });
+            
+            // Decline button handler
+            document.getElementById('declineBtn').addEventListener('click', function() {
+                // Clear any stored data
+                sessionStorage.clear();
+                // Close the window or redirect
+                window.close();
+                // If close doesn't work, show a message
+                if (!window.closed) {
+                    alert('Thank you for considering our research. You may now close this page.');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
