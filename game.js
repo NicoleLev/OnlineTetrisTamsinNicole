@@ -1,4 +1,4 @@
-// Meta-T Online Challenge–Frustration Experiment v0.3 Range-Finding Pilot
+// Meta-T Online Challenge–Frustration Experiment v0.3.1 Duration Pilot
 // Research prototype: fixed-duration difficulty conditions + ratings + telemetry.
 // IMPORTANT: Candidate speeds must be piloted before data collection.
 
@@ -40,19 +40,15 @@ async function sendCheckpoint(payload) {
 }
 
 const EXPERIMENT = {
-  version: "0.3-range-finding-pilot",
-  practiceDurationMs: 2 * 60 * 1000,
-  conditionDurationMs: 60 * 1000,
+  version: "0.3.1-duration-pilot",
+  practiceDurationMs: 1 * 60 * 1000,
+  conditionDurationMs: 2 * 60 * 1000,
   conditions: [
     {id:1, eegLevel:0, framesPerDrop:48, dropIntervalMs:800},
-    {id:2, eegLevel:2, framesPerDrop:38, dropIntervalMs:633},
-    {id:3, eegLevel:3, framesPerDrop:33, dropIntervalMs:550},
-    {id:4, eegLevel:4, framesPerDrop:28, dropIntervalMs:467},
-    {id:5, eegLevel:5, framesPerDrop:23, dropIntervalMs:383},
-    {id:6, eegLevel:6, framesPerDrop:18, dropIntervalMs:300},
-    {id:7, eegLevel:7, framesPerDrop:13, dropIntervalMs:217},
-    {id:8, eegLevel:8, framesPerDrop:8, dropIntervalMs:133},
-    {id:9, eegLevel:9, framesPerDrop:6, dropIntervalMs:100}
+    {id:2, eegLevel:4, framesPerDrop:28, dropIntervalMs:467},
+    {id:3, eegLevel:6, framesPerDrop:18, dropIntervalMs:300},
+    {id:4, eegLevel:7, framesPerDrop:13, dropIntervalMs:217},
+    {id:5, eegLevel:9, framesPerDrop:6, dropIntervalMs:100}
   ]
 };
 
@@ -118,7 +114,7 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.3-range-finding-pilot",
+        experiment_version: "0.3.1-duration-pilot",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
