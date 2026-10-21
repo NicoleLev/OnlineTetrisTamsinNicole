@@ -40,7 +40,7 @@ async function sendCheckpoint(payload) {
 }
 
 const EXPERIMENT = {
-  version: "0.3.1-duration-pilot",
+  version: "0.4-version-a-integrated",
   practiceDurationMs: 1 * 60 * 1000,
   conditionDurationMs: 2 * 60 * 1000,
   conditions: [
@@ -62,6 +62,46 @@ const PIECES = {
   L: { rotations: [[[7,7,7],[7,0,0]], [[7,7,0],[0,7,0],[0,7,0]], [[0,0,7],[7,7,7]], [[0,7,0],[0,7,0],[0,7,7]]], color: [239,121,33] }
 };
 
+
+// Version A matrix-sampled questionnaire. Gameplay conditions unchanged.
+const PILOT_A_GROUPS={
+A1:[['CC1','Succeeding in the game required much planning.'],['PC1','I had to react quickly when playing the game.'],['COM1','I felt I was getting better at playing Tetris overall.'],['AUT8','I felt powerless while playing this level of Tetris.']],
+A2:[['CC2','I had to memorise a lot of different things when playing the game.'],['EC1','This game is more than just a game to me.'],['E1','I felt disappointed with my performance in this level of Tetris.'],['DIS1','Playing this level of Tetris was taxing.']],
+A3:[['CC3','I had to think several steps ahead when playing the game.'],['DMC1','There were some decisions in the game that I regretted.'],['E2','I felt discouraged while playing this level of Tetris.'],['AUT1','I could make choices regarding how to play this level of Tetris.']],
+A4:[['CC4','I had to prepare for the things that the game threw at me.'],['PC2','I had to act quickly when playing the game.'],['COM2','I felt that I made progress while playing this level of Tetris.'],['AUT4','I found this level of Tetris confusing to play.']],
+A5:[['EC2','The things that happened in the game made me sad.'],['EC3','I invested much thought into the game.'],['E3','I felt annoyed while playing this level of Tetris.'],['DIS2','Playing this level of Tetris was demanding.']]
+};
+const PILOT_A_ANCHORS=[['ANCHOR-C','How challenging did you find this level of Tetris?'],['ANCHOR-F','How frustrated did you feel during this level of Tetris?'],['ANCHOR-E','How much did you enjoy this level of Tetris?']];
+const PILOT_A_LIKERT=['Strongly Disagree','Disagree','Slightly Disagree','Neither Agree nor Disagree','Slightly Agree','Agree','Strongly Agree'];
+const PILOT_A_ROTATION=Math.floor(Math.random()*5);
+const PILOT_A_ATT_LEVEL=Math.floor(Math.random()*5);
+const PILOT_A_ATT_POSITION=Math.floor(Math.random()*8);
+function pilotAGroup(index){return 'A'+((index+PILOT_A_ROTATION)%5+1);}
+function pilotAItems(index){const items=[...PILOT_A_ANCHORS,...PILOT_A_GROUPS[pilotAGroup(index)]];if(index===PILOT_A_ATT_LEVEL)items.splice(PILOT_A_ATT_POSITION,0,['ATTN','Attention check: Please select “Strongly Agree”.']);return items;}
+function showPilotAQuestionnaire(index){
+ const items=pilotAItems(index),container=document.getElementById('questionnaireItems');container.replaceChildren();
+ document.getElementById('ratingGroup').textContent='Questionnaire Version A · Group '+pilotAGroup(index);
+ items.forEach(([id,wording],position)=>{
+  const field=document.createElement('fieldset');field.style.marginBottom='18px';
+  const legend=document.createElement('legend');legend.textContent=(position+1)+'. '+wording;field.append(legend);
+  const scale=document.createElement('div');scale.className='scale';
+  const low=document.createElement('span');low.textContent=id.startsWith('ANCHOR')?'Not at all':'Strongly Disagree';scale.append(low);
+  for(let v=1;v<=7;v++){
+   const label=document.createElement('label');label.textContent=String(v);
+   const input=document.createElement('input');input.type='radio';input.name=id;input.value=String(v);input.required=true;
+   label.append(input);scale.append(label);
+  }
+  const high=document.createElement('span');high.textContent=id.startsWith('ANCHOR')?'Extremely':'Strongly Agree';scale.append(high);
+  field.append(scale);container.append(field);
+ });
+}
+function questionnaireCsv(logger){
+ const rows=logger.questionnaireResponses;
+ const columns=['participant_id','session_id','version','rotation','level','group','position','item_id','question','response','attention_check_pass','timestamp_iso'];
+ const csv=[columns.join(','),...rows.map(r=>columns.map(k=>'"'+String(r[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tetris_version_A_questionnaire.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
 class ExperimentLogger {
   constructor() {
     this.participantId = getParticipantId();
@@ -70,6 +110,8 @@ class ExperimentLogger {
     this.events = [];
     this.conditionSummaries = [];
     this.ratings = [];
+    this.questionnaireResponses = [];
+    this.questionnaireAssignment = {version:"A",rotation:PILOT_A_ROTATION+1,attention_check_level:PILOT_A_ATT_LEVEL+1,attention_check_position:PILOT_A_ATT_POSITION+1};
   }
   event(type, game, extra={}) {
     this.events.push({
@@ -99,7 +141,9 @@ class ExperimentLogger {
       page_url: location.href,
       events: this.events,
       condition_summaries: this.conditionSummaries,
-      ratings: this.ratings
+      ratings: this.ratings,
+      questionnaire_responses: this.questionnaireResponses,
+      questionnaire_assignment: this.questionnaireAssignment
     };
     try {
       await sendCheckpoint(payload);
@@ -114,13 +158,15 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.3.1-duration-pilot",
+        experiment_version: "0.4-version-a-integrated",
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
       events: this.events,
       condition_summaries: this.conditionSummaries,
-      ratings: this.ratings
+      ratings: this.ratings,
+      questionnaire_responses: this.questionnaireResponses,
+      questionnaire_assignment: this.questionnaireAssignment
     });
   }
 }
@@ -332,10 +378,16 @@ class TetrisGame {
     this.logger.checkpoint("condition_end");
     this.phase = "rating";
     showRating(c.id);
+    showPilotAQuestionnaire(this.conditionIndex);
     this.logger.event("rating_start", this);
   }
 
-  submitRating(challenge, frustration) {
+  submitRating(challenge, frustration, enjoyment, itemResponses) {
+    const level=this.conditionIndex;
+    pilotAItems(level).forEach(([id,question],position)=>{
+      const response=Number(itemResponses[id]);
+      this.logger.questionnaireResponses.push({participant_id:this.logger.participantId,session_id:this.logger.sessionId,version:"A",rotation:PILOT_A_ROTATION+1,level:level+1,group:pilotAGroup(level),position:position+1,item_id:id,question,response,attention_check_pass:id==="ATTN"?(response===7):"",timestamp_iso:new Date().toISOString()});
+    });
     const c = EXPERIMENT.conditions[this.conditionIndex];
     this.logger.ratings.push({
       participant_id: this.logger.participantId,
@@ -346,6 +398,7 @@ class TetrisGame {
       frames_per_drop: c.framesPerDrop,
       challenge_rating: Number(challenge),
       frustration_rating: Number(frustration),
+      enjoyment_rating: Number(enjoyment),
       timestamp_iso: new Date().toISOString()
     });
     this.logger.event("rating_response", this, {
@@ -356,6 +409,7 @@ class TetrisGame {
     if (summary) {
       summary.challenge_rating = Number(challenge);
       summary.frustration_rating = Number(frustration);
+      summary.enjoyment_rating = Number(enjoyment);
     }
     this.logger.checkpoint("rating_response");
 
@@ -586,9 +640,11 @@ document.addEventListener("DOMContentLoaded",()=>{
   document.getElementById("ratingForm").onsubmit=e=>{
     e.preventDefault();
     const fd=new FormData(e.target);
-    game.submitRating(fd.get("challenge"),fd.get("frustration"));
+    const answers={};for(const [k,v] of fd.entries())answers[k]=v;
+    game.submitRating(answers["ANCHOR-C"],answers["ANCHOR-F"],answers["ANCHOR-E"],answers);
   };
   document.getElementById("downloadBtn").onclick=()=>logger.exportAll();
+  document.getElementById("downloadCsvBtn").onclick=()=>questionnaireCsv(logger);
   showScreen("welcomeScreen");
 });
 
@@ -600,7 +656,7 @@ window.addEventListener("pagehide",()=>{
       participant_id:logger.participantId, session_id:logger.sessionId,
       session_started_at:logger.sessionStartedAt, sent_at:new Date().toISOString(),
       user_agent:navigator.userAgent, page_url:location.href,
-      events:logger.events, condition_summaries:logger.conditionSummaries, ratings:logger.ratings
+      events:logger.events, condition_summaries:logger.conditionSummaries, ratings:logger.ratings, questionnaire_responses:logger.questionnaireResponses, questionnaire_assignment:logger.questionnaireAssignment
     };
     const body=JSON.stringify(payload);
     localStorage.setItem("meta_t_unsent_checkpoint_v02",body);

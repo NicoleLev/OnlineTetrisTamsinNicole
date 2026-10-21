@@ -17,7 +17,7 @@
 
   <section id="experimentIntro" class="screen card hidden">
     <h1>Practice complete</h1>
-    <p>The experiment contains five conditions. Each condition uses a predefined falling speed. After each condition you will answer two brief questions.</p>
+    <p>The experiment contains five conditions. Each condition uses a predefined falling speed. After each condition you will answer seven questions (eight on one randomly selected level).</p>
     <button id="startExperimentBtn">Start experiment</button>
   </section>
 
@@ -47,47 +47,19 @@
   </section>
 
   <section id="ratingScreen" class="screen card hidden">
-    <h1>Condition <span id="ratingCondition"></span> complete</h1>
-    <form id="ratingForm">
-      <fieldset>
-        <legend>How challenging did you find that condition?</legend>
-        <div class="scale">
-          <span>Not at all</span>
-          <label>1<input required type="radio" name="challenge" value="1"></label>
-          <label>2<input type="radio" name="challenge" value="2"></label>
-          <label>3<input type="radio" name="challenge" value="3"></label>
-          <label>4<input type="radio" name="challenge" value="4"></label>
-          <label>5<input type="radio" name="challenge" value="5"></label>
-          <label>6<input type="radio" name="challenge" value="6"></label>
-          <label>7<input type="radio" name="challenge" value="7"></label>
-          <span>Extremely</span>
-        </div>
-      </fieldset>
-      <fieldset>
-        <legend>How frustrated did you feel during that condition?</legend>
-        <div class="scale">
-          <span>Not at all</span>
-          <label>1<input required type="radio" name="frustration" value="1"></label>
-          <label>2<input type="radio" name="frustration" value="2"></label>
-          <label>3<input type="radio" name="frustration" value="3"></label>
-          <label>4<input type="radio" name="frustration" value="4"></label>
-          <label>5<input type="radio" name="frustration" value="5"></label>
-          <label>6<input type="radio" name="frustration" value="6"></label>
-          <label>7<input type="radio" name="frustration" value="7"></label>
-          <span>Extremely</span>
-        </div>
-      </fieldset>
-      <button type="submit">Continue</button>
-    </form>
+    <h1>Level <span id="ratingCondition"></span> complete</h1>
+    <p>Answer all questions about the level you have just played.</p>
+    <p id="ratingGroup" style="font-weight:bold"></p>
+    <form id="ratingForm"><div id="questionnaireItems"></div><button type="submit">Continue</button></form>
   </section>
-
   <section id="completeScreen" class="screen card hidden">
-    <h1>Gameplay complete</h1>
-    <p>The post-play questionnaire (CORGIS + NASA-TLX) is intentionally not hard-coded in v0.1.2. The validated wording/scoring should be confirmed before implementation.</p>
-    <p>For development testing only, download the locally recorded telemetry below.</p>
-    <button id="downloadBtn">Download test data</button>
+    <h1>Pilot complete</h1>
+    <p>Thank you for completing the five Tetris levels and Version A questionnaires.</p>
+    <p>For pilot testing, download the full gameplay and questionnaire data. Check that the downloaded file includes all 36 questionnaire responses.</p>
+    <button id="downloadBtn">Download full pilot data (JSON)</button>
+    <button id="downloadCsvBtn">Download questionnaire responses (CSV)</button>
   </section>
 </main>
-<script src="game.js?v=0.3.1-duration-pilot"></script>
+<script src="game.js?v=0.4-version-a-integrated"></script>
 </body>
 </html>
