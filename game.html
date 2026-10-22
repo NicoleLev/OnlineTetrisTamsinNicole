@@ -11,13 +11,13 @@
   <section id="welcomeScreen" class="screen card">
     <h1>Meta-T Research Prototype</h1>
     <p>Participant ID: <code id="participantId"></code></p>
-    <p>This is range-finding pilot version 0.3.1. It contains a practice period followed by five two-minute difficulty conditions.</p>
+    <p>This is HMM instrumentation pilot version 0.5. It contains a practice period followed by five two-minute difficulty conditions.</p>
     <button id="practiceBtn">Start practice</button>
   </section>
 
   <section id="experimentIntro" class="screen card hidden">
     <h1>Practice complete</h1>
-    <p>The experiment contains five conditions. Each condition uses a predefined falling speed. After each condition you will answer seven questions (eight on one randomly selected level).</p>
+    <p>The experiment contains five conditions. Each condition uses a predefined falling speed. After each condition you will answer three brief ratings (challenge, enjoyment and frustration).</p>
     <button id="startExperimentBtn">Start experiment</button>
   </section>
 
@@ -49,17 +49,17 @@
   <section id="ratingScreen" class="screen card hidden">
     <h1>Level <span id="ratingCondition"></span> complete</h1>
     <p>Answer all questions about the level you have just played.</p>
-    <p id="ratingGroup" style="font-weight:bold"></p>
+    
     <form id="ratingForm"><div id="questionnaireItems"></div><button type="submit">Continue</button></form>
   </section>
   <section id="completeScreen" class="screen card hidden">
     <h1>Pilot complete</h1>
-    <p>Thank you for completing the five Tetris levels and Version A questionnaires.</p>
-    <p>For pilot testing, download the full gameplay and questionnaire data. Check that the downloaded file includes all 36 questionnaire responses.</p>
+    <p>Thank you for completing the five Tetris levels and three ratings after each level.</p>
+    <p>For pilot testing, download the full gameplay and questionnaire data. Check that the downloaded file includes 15 questionnaire responses and detailed piece-level telemetry.</p>
     <button id="downloadBtn">Download full pilot data (JSON)</button>
     <button id="downloadCsvBtn">Download questionnaire responses (CSV)</button>
   </section>
 </main>
-<script src="game.js?v=hmm-logging-pilot-01"></script>
+<script src="game.js?v=hmm-three-ratings-06"></script>
 </body>
 </html>

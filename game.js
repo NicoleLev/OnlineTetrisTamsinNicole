@@ -5,7 +5,7 @@
 
 const DATA_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx8J8GSpEidx-WarHNmS7_Ko4eBpFFLJMgcDq758dzrWQX83I6eor9jK8YBNWW3GhnptA/exec";
 const DATA_UPLOAD_VERSION = "0.2";
-const HMM_LOGGING_REVISION = "hmm-logging-pilot-01";
+const HMM_LOGGING_REVISION = "hmm-raw-telemetry-02";
 
 function makeParticipantId() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -41,7 +41,7 @@ async function sendCheckpoint(payload) {
 }
 
 const EXPERIMENT = {
-  version: "0.4-version-a-integrated",
+  version: "0.6-hmm-instrumented-three-ratings",
   practiceDurationMs: 1 * 60 * 1000,
   conditionDurationMs: 2 * 60 * 1000,
   conditions: [
@@ -64,45 +64,36 @@ const PIECES = {
 };
 
 
-// Version A matrix-sampled questionnaire. Gameplay conditions unchanged.
-const PILOT_A_GROUPS={
-A1:[['CC1','Succeeding in the game required much planning.'],['PC1','I had to react quickly when playing the game.'],['COM1','I felt I was getting better at playing Tetris overall.'],['AUT8','I felt powerless while playing this level of Tetris.']],
-A2:[['CC2','I had to memorise a lot of different things when playing the game.'],['EC1','This game is more than just a game to me.'],['E1','I felt disappointed with my performance in this level of Tetris.'],['DIS1','Playing this level of Tetris was taxing.']],
-A3:[['CC3','I had to think several steps ahead when playing the game.'],['DMC1','There were some decisions in the game that I regretted.'],['E2','I felt discouraged while playing this level of Tetris.'],['AUT1','I could make choices regarding how to play this level of Tetris.']],
-A4:[['CC4','I had to prepare for the things that the game threw at me.'],['PC2','I had to act quickly when playing the game.'],['COM2','I felt that I made progress while playing this level of Tetris.'],['AUT4','I found this level of Tetris confusing to play.']],
-A5:[['EC2','The things that happened in the game made me sad.'],['EC3','I invested much thought into the game.'],['E3','I felt annoyed while playing this level of Tetris.'],['DIS2','Playing this level of Tetris was demanding.']]
-};
-const PILOT_A_ANCHORS=[['ANCHOR-C','How challenging did you find this level of Tetris?'],['ANCHOR-F','How frustrated did you feel during this level of Tetris?'],['ANCHOR-E','How much did you enjoy this level of Tetris?']];
-const PILOT_A_LIKERT=['Strongly Disagree','Disagree','Slightly Disagree','Neither Agree nor Disagree','Slightly Agree','Agree','Strongly Agree'];
-const PILOT_A_ROTATION=Math.floor(Math.random()*5);
-const PILOT_A_ATT_LEVEL=Math.floor(Math.random()*5);
-const PILOT_A_ATT_POSITION=Math.floor(Math.random()*8);
-function pilotAGroup(index){return 'A'+((index+PILOT_A_ROTATION)%5+1);}
-function pilotAItems(index){const items=[...PILOT_A_ANCHORS,...PILOT_A_GROUPS[pilotAGroup(index)]];if(index===PILOT_A_ATT_LEVEL)items.splice(PILOT_A_ATT_POSITION,0,['ATTN','Attention check: Please select “Strongly Agree”.']);return items;}
-function showPilotAQuestionnaire(index){
- const items=pilotAItems(index),container=document.getElementById('questionnaireItems');container.replaceChildren();
- document.getElementById('ratingGroup').textContent='Questionnaire Version A · Group '+pilotAGroup(index);
- items.forEach(([id,wording],position)=>{
-  const field=document.createElement('fieldset');field.style.marginBottom='18px';
-  const legend=document.createElement('legend');legend.textContent=(position+1)+'. '+wording;field.append(legend);
-  const scale=document.createElement('div');scale.className='scale';
-  const low=document.createElement('span');low.textContent=id.startsWith('ANCHOR')?'Not at all':'Strongly Disagree';scale.append(low);
-  for(let v=1;v<=7;v++){
-   const label=document.createElement('label');label.textContent=String(v);
-   const input=document.createElement('input');input.type='radio';input.name=id;input.value=String(v);input.required=true;
-   label.append(input);scale.append(label);
-  }
-  const high=document.createElement('span');high.textContent=id.startsWith('ANCHOR')?'Extremely':'Strongly Agree';scale.append(high);
-  field.append(scale);container.append(field);
- });
+// Three brief post-level ratings. Falling speed manipulates objective difficulty; challenge is self-reported.
+const RATING_ITEMS = [
+  ['ANCHOR-C','How challenging did you find this level of Tetris?'],
+  ['ANCHOR-E','How much did you enjoy this level of Tetris?'],
+  ['ANCHOR-F','How frustrated did you feel during this level of Tetris?']
+];
+function ratingItems(){ return RATING_ITEMS; }
+function showBriefRatings(){
+  const container=document.getElementById('questionnaireItems');container.replaceChildren();
+  RATING_ITEMS.forEach(([id,wording],position)=>{
+    const field=document.createElement('fieldset');field.style.marginBottom='18px';
+    const legend=document.createElement('legend');legend.textContent=(position+1)+'. '+wording;field.append(legend);
+    const scale=document.createElement('div');scale.className='scale';
+    const low=document.createElement('span');low.textContent='Not at all';scale.append(low);
+    for(let v=1;v<=7;v++){
+      const label=document.createElement('label');label.textContent=String(v);
+      const input=document.createElement('input');input.type='radio';input.name=id;input.value=String(v);input.required=true;
+      label.append(input);scale.append(label);
+    }
+    const high=document.createElement('span');high.textContent='Extremely';scale.append(high);
+    field.append(scale);container.append(field);
+  });
 }
 function questionnaireCsv(logger){
- const rows=logger.questionnaireResponses;
- const columns=['participant_id','session_id','version','rotation','level','group','position','item_id','question','response','attention_check_pass','timestamp_iso'];
- const csv=[columns.join(','),...rows.map(r=>columns.map(k=>'"'+String(r[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n');
- const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tetris_version_A_questionnaire.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+  const rows=logger.questionnaireResponses;
+  const columns=['participant_id','session_id','version','level','position','item_id','question','response','timestamp_iso'];
+  const csv=[columns.join(','),...rows.map(r=>columns.map(k=>'"'+String(r[k]??'').replace(/"/g,'""')+'"').join(','))].join('\r\n');
+  const blob=new Blob([csv],{type:'text/csv'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='tetris_three_ratings.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
-
+function boardBinary(board){return board.map(row=>row.map(cell=>cell?1:0).join(''));}
 class ExperimentLogger {
   constructor() {
     this.participantId = getParticipantId();
@@ -112,7 +103,7 @@ class ExperimentLogger {
     this.conditionSummaries = [];
     this.ratings = [];
     this.questionnaireResponses = [];
-    this.questionnaireAssignment = {version:"A",rotation:PILOT_A_ROTATION+1,attention_check_level:PILOT_A_ATT_LEVEL+1,attention_check_position:PILOT_A_ATT_POSITION+1};
+    this.questionnaireAssignment = {version:"three-ratings",items:RATING_ITEMS.map(x=>x[0])};
   }
   event(type, game, extra={}) {
     this.events.push({
@@ -120,6 +111,7 @@ class ExperimentLogger {
       session_id: this.sessionId,
       timestamp_iso: new Date().toISOString(),
       timestamp_ms: Date.now(),
+      monotonic_ms: performance.now(),
       phase: game.phase,
       condition: game.conditionIndex >= 0 ? game.conditionIndex + 1 : null,
       attempt: game.attempt,
@@ -127,6 +119,7 @@ class ExperimentLogger {
       event: type,
       score: game.score,
       lines: game.lines,
+      active_piece_id: game.currentPiece?.piece_id ?? null,
       ...extra
     });
   }
@@ -140,6 +133,9 @@ class ExperimentLogger {
       sent_at: new Date().toISOString(),
       user_agent: navigator.userAgent,
       page_url: location.href,
+      telemetry_schema:"raw-hmm-v2",
+      board_encoding:"20 rows of 10 binary digits, top to bottom",
+      gravity_intervals_ms:EXPERIMENT.conditions.map(c=>c.dropIntervalMs),
       hmm_logging_revision: HMM_LOGGING_REVISION,
       experiment_version: EXPERIMENT.version,
       events: this.events,
@@ -164,7 +160,10 @@ class ExperimentLogger {
         experiment_version: EXPERIMENT.version,
         hmm_logging_revision: HMM_LOGGING_REVISION,
         exported_at: new Date().toISOString(),
-        user_agent: navigator.userAgent
+        user_agent: navigator.userAgent,
+        telemetry_schema:"raw-hmm-v2",
+        board_encoding:"20 rows of 10 binary digits, top to bottom",
+        gravity_intervals_ms:EXPERIMENT.conditions.map(c=>c.dropIntervalMs)
       },
       events: this.events,
       condition_summaries: this.conditionSummaries,
@@ -187,6 +186,7 @@ class TetrisGame {
     this.blockSize = canvas.width / this.boardWidth;
 
     this.phase = "idle"; // idle, practice, play, rating, complete
+    this.pieceSerial = 0;
     this.conditionIndex = -1;
     this.attempt = 1;
     this.conditionStartedAt = null;
@@ -227,7 +227,8 @@ class TetrisGame {
       y: 0,
       shape: p.rotations[0],
       colorData: p.color,
-      spawnedAt: performance.now()
+      spawnedAt: performance.now(),
+      piece_id: ++this.pieceSerial
     };
   }
 
@@ -318,7 +319,7 @@ class TetrisGame {
     this.phaseRemainingMs = EXPERIMENT.conditionDurationMs;
     this.conditionStartedAt = Date.now();
     this.resetBoard(true);
-    this.logger.event("condition_start", this, { condition_id: c.id });
+    this.logger.event("condition_start", this, { condition_id: c.id, gravity_interval_ms:c.dropIntervalMs, board_width:this.boardWidth, board_height:this.boardHeight, controls:"left-right-single-step;up-clockwise;down-50ms-held;hard-drop-disabled" });
     this.logPieceSpawn("condition_start");
     this.startLoop();
   }
@@ -378,21 +379,22 @@ class TetrisGame {
       attempts: this.attempt,
       challenge_rating: "",
       frustration_rating: "",
+      enjoyment_rating: "",
       started_at: startedAt,
       ended_at: endedAt
     });
     this.logger.checkpoint("condition_end");
     this.phase = "rating";
     showRating(c.id);
-    showPilotAQuestionnaire(this.conditionIndex);
+    showBriefRatings();
     this.logger.event("rating_start", this);
   }
 
   submitRating(challenge, frustration, enjoyment, itemResponses) {
     const level=this.conditionIndex;
-    pilotAItems(level).forEach(([id,question],position)=>{
+    RATING_ITEMS.forEach(([id,question],position)=>{
       const response=Number(itemResponses[id]);
-      this.logger.questionnaireResponses.push({participant_id:this.logger.participantId,session_id:this.logger.sessionId,version:"A",rotation:PILOT_A_ROTATION+1,level:level+1,group:pilotAGroup(level),position:position+1,item_id:id,question,response,attention_check_pass:id==="ATTN"?(response===7):"",timestamp_iso:new Date().toISOString()});
+      this.logger.questionnaireResponses.push({participant_id:this.logger.participantId,session_id:this.logger.sessionId,version:"three-ratings",level:level+1,position:position+1,item_id:id,question,response,timestamp_iso:new Date().toISOString()});
     });
     const c = EXPERIMENT.conditions[this.conditionIndex];
     this.logger.ratings.push({
@@ -409,7 +411,8 @@ class TetrisGame {
     });
     this.logger.event("rating_response", this, {
       challenge_rating: Number(challenge),
-      frustration_rating: Number(frustration)
+      frustration_rating: Number(frustration),
+      enjoyment_rating: Number(enjoyment)
     });
     const summary = this.logger.conditionSummaries.find(s => s.condition === c.id);
     if (summary) {
@@ -468,8 +471,9 @@ class TetrisGame {
 
   logPieceSpawn(reason) {
     this.logger.event("piece_spawn", this, {
-      piece: this.currentPiece.type, x: this.currentPiece.x,
+      piece: this.currentPiece.type, piece_id:this.currentPiece.piece_id, x: this.currentPiece.x,
       y: this.currentPiece.y, rotation: this.currentPiece.rotation,
+      next_piece:this.nextPiece.type, board_before:boardBinary(this.board),
       reason, hmm_logging_revision: HMM_LOGGING_REVISION
     });
   }
@@ -501,6 +505,7 @@ class TetrisGame {
   }
 
   placePiece() {
+    const boardBeforePlacement=boardBinary(this.board);
     const {shape,colorData} = this.currentPiece;
     for (let r=0; r<shape.length; r++) for (let c=0; c<shape[r].length; c++) {
       if (!shape[r][c]) continue;
@@ -513,12 +518,16 @@ class TetrisGame {
     }
     this.piecesPlaced++;
     this.logger.event("piece_placed", this, {
-      piece:this.currentPiece.type,
+      piece:this.currentPiece.type, piece_id:this.currentPiece.piece_id,
+      board_before:boardBeforePlacement,
+      shape:this.currentPiece.shape.map(row=>row.map(Boolean)),
+      next_piece:this.nextPiece.type,
       x:this.currentPiece.x, y:this.currentPiece.y,
       rotation:this.currentPiece.rotation,
       decision_time_ms: Math.round(performance.now()-this.currentPiece.spawnedAt)
     });
     this.clearLines();
+    this.logger.event("board_after_placement",this,{piece_id:this.currentPiece.piece_id,board_after:boardBinary(this.board)});
 
     // Robust top-out check. If blocks remain in the spawn zone after the
     // placement/line-clear step, end this attempt immediately.
@@ -674,6 +683,7 @@ window.addEventListener("pagehide",()=>{
       participant_id:logger.participantId, session_id:logger.sessionId,
       session_started_at:logger.sessionStartedAt, sent_at:new Date().toISOString(),
       user_agent:navigator.userAgent, page_url:location.href,
+      telemetry_schema:"raw-hmm-v2", hmm_logging_revision:HMM_LOGGING_REVISION, experiment_version:EXPERIMENT.version,
       events:logger.events, condition_summaries:logger.conditionSummaries, ratings:logger.ratings, questionnaire_responses:logger.questionnaireResponses, questionnaire_assignment:logger.questionnaireAssignment
     };
     const body=JSON.stringify(payload);
