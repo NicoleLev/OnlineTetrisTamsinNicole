@@ -5,6 +5,7 @@
 
 const DATA_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx8J8GSpEidx-WarHNmS7_Ko4eBpFFLJMgcDq758dzrWQX83I6eor9jK8YBNWW3GhnptA/exec";
 const DATA_UPLOAD_VERSION = "0.2";
+const HMM_LOGGING_REVISION = "hmm-logging-pilot-01";
 
 function makeParticipantId() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -139,6 +140,8 @@ class ExperimentLogger {
       sent_at: new Date().toISOString(),
       user_agent: navigator.userAgent,
       page_url: location.href,
+      hmm_logging_revision: HMM_LOGGING_REVISION,
+      experiment_version: EXPERIMENT.version,
       events: this.events,
       condition_summaries: this.conditionSummaries,
       ratings: this.ratings,
@@ -158,7 +161,8 @@ class ExperimentLogger {
       metadata: {
         participant_id: this.participantId,
         session_id: this.sessionId,
-        experiment_version: "0.4-version-a-integrated",
+        experiment_version: EXPERIMENT.version,
+        hmm_logging_revision: HMM_LOGGING_REVISION,
         exported_at: new Date().toISOString(),
         user_agent: navigator.userAgent
       },
@@ -298,6 +302,7 @@ class TetrisGame {
     this.phaseRemainingMs = EXPERIMENT.practiceDurationMs;
     this.resetBoard(true);
     this.logger.event("practice_start", this);
+    this.logPieceSpawn("practice_start");
     this.startLoop();
   }
 
@@ -314,6 +319,7 @@ class TetrisGame {
     this.conditionStartedAt = Date.now();
     this.resetBoard(true);
     this.logger.event("condition_start", this, { condition_id: c.id });
+    this.logPieceSpawn("condition_start");
     this.startLoop();
   }
 
@@ -460,11 +466,22 @@ class TetrisGame {
     this.logger.event("rotate", this, { success, piece:this.currentPiece.type, rotation:this.currentPiece.rotation });
   }
 
+  logPieceSpawn(reason) {
+    this.logger.event("piece_spawn", this, {
+      piece: this.currentPiece.type, x: this.currentPiece.x,
+      y: this.currentPiece.y, rotation: this.currentPiece.rotation,
+      reason, hmm_logging_revision: HMM_LOGGING_REVISION
+    });
+  }
+
   softDrop(source="participant") {
     this.currentPiece.y++;
     if (this.collision()) {
       this.currentPiece.y--;
+      this.logger.event("downward_collision", this, { source, piece: this.currentPiece.type, y: this.currentPiece.y });
       this.placePiece();
+    } else if (source === "gravity") {
+      this.logger.event("gravity_step", this, { piece: this.currentPiece.type, y: this.currentPiece.y });
     } else if (source === "participant") {
       this.logger.event("soft_drop", this, { piece:this.currentPiece.type, y:this.currentPiece.y, input_mode:"initial_press" });
     } else if (source === "participant_held") {
@@ -522,7 +539,7 @@ class TetrisGame {
       return;
     }
 
-    this.logger.event("piece_spawn", this, { piece:this.currentPiece.type });
+    this.logPieceSpawn("after_placement");
   }
 
   clearLines() {
@@ -562,6 +579,7 @@ class TetrisGame {
     this.attempt++;
     this.resetBoard(false);
     this.logger.event("restart", this);
+    this.logPieceSpawn("restart");
   }
 
 
