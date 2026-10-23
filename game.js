@@ -5,7 +5,9 @@
 
 const DATA_BACKEND_URL = "https://script.google.com/macros/s/AKfycbx8J8GSpEidx-WarHNmS7_Ko4eBpFFLJMgcDq758dzrWQX83I6eor9jK8YBNWW3GhnptA/exec";
 const DATA_UPLOAD_VERSION = "0.2";
-const HMM_LOGGING_REVISION = "hmm-raw-telemetry-02";
+const HMM_LOGGING_REVISION = "hmm-raw-telemetry-03-hold-horizontal";
+const HORIZONTAL_DAS_MS = 267;
+const HORIZONTAL_ARR_MS = 100;
 
 function makeParticipantId() {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -32,16 +34,18 @@ function makeSessionId() {
 async function sendCheckpoint(payload) {
   const body=JSON.stringify(payload);
   localStorage.setItem("meta_t_unsent_checkpoint_v02",body);
-  await fetch(DATA_BACKEND_URL,{
+  const response = await fetch(DATA_BACKEND_URL,{
     method:"POST", mode:"no-cors",
     headers:{"Content-Type":"text/plain;charset=utf-8"},
     body
   });
+  // no-cors returns an opaque response: receipt by Google Drive is NOT confirmed.
+  if (response.type !== "opaque" && !response.ok) throw new Error("Upload request failed");
   localStorage.removeItem("meta_t_unsent_checkpoint_v02");
 }
 
 const EXPERIMENT = {
-  version: "0.6-hmm-instrumented-three-ratings",
+  version: "0.7-hmm-hold-horizontal-no-download",
   practiceDurationMs: 1 * 60 * 1000,
   conditionDurationMs: 2 * 60 * 1000,
   conditions: [
@@ -196,12 +200,16 @@ class TetrisGame {
     this.keys = {};
     this.softDropHeld = false;
     this.softDropRepeatTimer = null;
+    this.horizontalHeld = null;
+    this.horizontalDelayTimer = null;
+    this.horizontalRepeatTimer = null;
     this.resetBoard(true);
     this.setupInput();
   }
 
   resetBoard(resetConditionStats=false) {
     this.stopHeldSoftDrop();
+    this.stopHeldHorizontal();
     this.board = Array.from({length:this.boardHeight}, () => Array(this.boardWidth).fill(0));
     this.currentPiece = this.createPiece();
     this.nextPiece = this.createPiece();
@@ -244,6 +252,38 @@ class TetrisGame {
     }
   }
 
+  stopHeldHorizontal(logEnd=false) {
+    const previous = this.horizontalHeld;
+    this.horizontalHeld = null;
+    clearTimeout(this.horizontalDelayTimer);
+    clearInterval(this.horizontalRepeatTimer);
+    this.horizontalDelayTimer = null;
+    this.horizontalRepeatTimer = null;
+    if (logEnd && previous && ["practice","play"].includes(this.phase)) {
+      this.logger.event("horizontal_hold_end", this, {key: previous});
+    }
+  }
+
+  startHeldHorizontal(key) {
+    if (this.horizontalHeld === key) return;
+    this.stopHeldHorizontal(true);
+    this.horizontalHeld = key;
+    const direction = key === "ArrowLeft" ? -1 : 1;
+    this.logger.event("horizontal_hold_start", this, {key, das_ms:HORIZONTAL_DAS_MS, arr_ms:HORIZONTAL_ARR_MS});
+    this.movePiece(direction, "initial_press");
+    this.horizontalDelayTimer = setTimeout(() => {
+      if (this.horizontalHeld !== key || !["practice","play"].includes(this.phase)) return;
+      this.movePiece(direction, "held_repeat");
+      this.horizontalRepeatTimer = setInterval(() => {
+        if (this.horizontalHeld !== key || !["practice","play"].includes(this.phase)) {
+          this.stopHeldHorizontal();
+          return;
+        }
+        this.movePiece(direction, "held_repeat");
+      }, HORIZONTAL_ARR_MS);
+    }, HORIZONTAL_DAS_MS);
+  }
+
   setupInput() {
     window.addEventListener("keydown", e => {
       if (!["practice","play"].includes(this.phase)) return;
@@ -275,22 +315,29 @@ class TetrisGame {
         return;
       }
 
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        if (e.repeat || this.horizontalHeld === e.key) return;
+        this.keypresses++;
+        this.logger.event("keypress", this, {key:e.key, piece:this.currentPiece.type, input_mode:"physical_keydown"});
+        this.startHeldHorizontal(e.key);
+        return;
+      }
       if (e.repeat) return;
       this.keypresses++;
       this.logger.event("keypress", this, { key: e.key, piece: this.currentPiece.type });
-      if (e.key === "ArrowLeft") this.movePiece(-1);
-      else if (e.key === "ArrowRight") this.movePiece(1);
-      else if (e.key === "ArrowUp") this.rotatePiece();
+      if (e.key === "ArrowUp") this.rotatePiece();
     });
 
     window.addEventListener("keyup", e => {
       if (e.key === "ArrowDown") this.stopHeldSoftDrop(true);
+      if (e.key === this.horizontalHeld) this.stopHeldHorizontal(true);
     });
-    window.addEventListener("blur", () => this.stopHeldSoftDrop());
+    window.addEventListener("blur", () => { this.stopHeldSoftDrop(); this.stopHeldHorizontal(); });
 
     document.addEventListener("visibilitychange", () => {
       if (document.hidden) {
         this.stopHeldSoftDrop();
+        this.stopHeldHorizontal();
         this.logger.event("focus_lost", this);
       } else this.logger.event("focus_regained", this);
     });
@@ -319,7 +366,7 @@ class TetrisGame {
     this.phaseRemainingMs = EXPERIMENT.conditionDurationMs;
     this.conditionStartedAt = Date.now();
     this.resetBoard(true);
-    this.logger.event("condition_start", this, { condition_id: c.id, gravity_interval_ms:c.dropIntervalMs, board_width:this.boardWidth, board_height:this.boardHeight, controls:"left-right-single-step;up-clockwise;down-50ms-held;hard-drop-disabled" });
+    this.logger.event("condition_start", this, { condition_id: c.id, gravity_interval_ms:c.dropIntervalMs, board_width:this.boardWidth, board_height:this.boardHeight, controls:"left-right-DAS267-ARR100;up-clockwise;down-50ms-held;hard-drop-disabled" });
     this.logPieceSpawn("condition_start");
     this.startLoop();
   }
@@ -347,6 +394,8 @@ class TetrisGame {
   }
 
   endPractice() {
+    this.stopHeldHorizontal();
+    this.stopHeldSoftDrop();
     this.logger.event("practice_end", this);
     this.logger.checkpoint("practice_end");
     this.phase = "idle";
@@ -354,6 +403,8 @@ class TetrisGame {
   }
 
   endCondition() {
+    this.stopHeldHorizontal();
+    this.stopHeldSoftDrop();
     const c = EXPERIMENT.conditions[this.conditionIndex];
     this.logger.event("condition_end", this);
     const conditionEvents = this.logger.events.filter(e => e.condition === c.id && e.phase === "play");
@@ -428,8 +479,8 @@ class TetrisGame {
       this.startCondition();
     } else {
       this.phase = "complete";
-      this.logger.checkpoint("study_complete");
       showScreen("completeScreen");
+      void submitFinalCheckpoint();
     }
   }
 
@@ -441,7 +492,7 @@ class TetrisGame {
     }
   }
 
-  movePiece(direction) {
+  movePiece(direction, inputMode="initial_press") {
     const before = this.currentPiece.x;
     this.currentPiece.x += direction;
     let success = true;
@@ -650,6 +701,24 @@ function downloadJSON(filename,data){
 }
 
 let game, logger;
+async function submitFinalCheckpoint() {
+  const status=document.getElementById("uploadStatus");
+  const retry=document.getElementById("retryUploadBtn");
+  const finish=document.getElementById("finishBtn");
+  retry.classList.add("hidden");
+  finish.disabled=true;
+  status.textContent="Submitting your responses…";
+  const sent=await logger.checkpoint("study_complete");
+  if (sent) {
+    status.textContent="Your data submission has been sent. You may finish now.";
+    // The Apps Script endpoint uses no-cors; this cannot confirm Drive persistence.
+    finish.disabled=false;
+  } else {
+    status.textContent="The submission could not be sent. Please check your connection and retry.";
+    retry.classList.remove("hidden");
+  }
+}
+
 document.addEventListener("DOMContentLoaded",()=>{
   if (sessionStorage.getItem("consentGiven") !== "true") {
     window.location.replace("index.html");
@@ -670,8 +739,11 @@ document.addEventListener("DOMContentLoaded",()=>{
     const answers={};for(const [k,v] of fd.entries())answers[k]=v;
     game.submitRating(answers["ANCHOR-C"],answers["ANCHOR-F"],answers["ANCHOR-E"],answers);
   };
-  document.getElementById("downloadBtn").onclick=()=>logger.exportAll();
-  document.getElementById("downloadCsvBtn").onclick=()=>questionnaireCsv(logger);
+  document.getElementById("retryUploadBtn").onclick=()=>{ void submitFinalCheckpoint(); };
+  document.getElementById("finishBtn").onclick=()=>{
+    document.getElementById("finishBtn").disabled=true;
+    document.getElementById("uploadStatus").textContent="Thank you for participating. You may close this tab.";
+  };
   showScreen("welcomeScreen");
 });
 

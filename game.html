@@ -11,7 +11,7 @@
   <section id="welcomeScreen" class="screen card">
     <h1>Meta-T Research Prototype</h1>
     <p>Participant ID: <code id="participantId"></code></p>
-    <p>This is HMM instrumentation pilot version 0.5. It contains a practice period followed by five two-minute difficulty conditions.</p>
+    <p>This is HMM instrumentation pilot version 0.7. It contains a practice period followed by five two-minute difficulty conditions.</p>
     <button id="practiceBtn">Start practice</button>
   </section>
 
@@ -41,7 +41,7 @@
         <div>Attempt <strong id="attempt">1</strong></div>
         <h3>Next</h3>
         <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
-        <p class="small">← → move · ↑ rotate · ↓ soft drop</p>
+        <p class="small">Hold ← / → to move continuously · ↑ rotate · hold ↓ to soft drop</p>
       </aside>
     </div>
   </section>
@@ -55,11 +55,11 @@
   <section id="completeScreen" class="screen card hidden">
     <h1>Pilot complete</h1>
     <p>Thank you for completing the five Tetris levels and three ratings after each level.</p>
-    <p>For pilot testing, download the full gameplay and questionnaire data. Check that the downloaded file includes 15 questionnaire responses and detailed piece-level telemetry.</p>
-    <button id="downloadBtn">Download full pilot data (JSON)</button>
-    <button id="downloadCsvBtn">Download questionnaire responses (CSV)</button>
+    <p id="uploadStatus" role="status" aria-live="polite">Submitting your responses…</p>
+    <button id="retryUploadBtn" class="hidden">Retry submission</button>
+    <button id="finishBtn" disabled>Finish</button>
   </section>
 </main>
-<script src="game.js?v=hmm-three-ratings-06"></script>
+<script src="game.js?v=hmm-three-ratings-07"></script>
 </body>
 </html>
