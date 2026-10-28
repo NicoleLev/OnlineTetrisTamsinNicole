@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Piece selector browser check</title>
+<style>body{font:14px/1.5 system-ui,sans-serif;margin:24px}iframe{width:900px;height:700px;border:1px solid #999}pre{background:#f4f4f4;padding:12px;white-space:pre-wrap}</style>
+</head>
+<body>
+<h1>Piece selector browser check</h1>
+<p>Serve the repository folder (for example <code>python3 -m http.server 8000</code>) and open
+<code>http://localhost:8000/tests/browser_check.html</code>. This page loads the real <code>game.html</code>,
+plays the practice and all five conditions with a simulated player, answers the ratings, and checks the log.
+Uploads are intercepted inside the page, so nothing is sent to the study backend.</p>
+<p>Result: <strong id="status">running…</strong></p>
+<pre id="result"></pre>
+<script>
+sessionStorage.setItem("participantId", "PPT-BROWSER2");
+sessionStorage.setItem("consentGiven", "true");
+const frame = document.createElement("iframe");
+frame.src = "../game.html";
+document.body.append(frame);
+
+function finish(ok, report) {
+  document.getElementById("status").textContent = ok ? "PASS" : "FAIL";
+  document.getElementById("result").textContent = JSON.stringify(report, null, 2);
+  document.title = ok ? "PASS" : "FAIL";
+}
+
+frame.onload = () => {
+  const w = frame.contentWindow, errors = [], uploads = [];
+  try {
+    w.addEventListener("error", e => errors.push(String(e.message)));
+    const consoleError = w.console.error.bind(w.console);
+    w.console.error = (...a) => { errors.push(a.map(String).join(" ")); consoleError(...a); };
+    const stub = (url, opts) => { uploads.push({url, bytes: (opts && opts.body || "").length}); return Promise.resolve({type: "opaque", ok: false}); };
+    w.fetch = stub;
+    w.navigator.sendBeacon = () => true;
+    if (w.fetch !== stub) throw new Error("could not intercept uploads; stopping before any data is sent");
+
+    const game = w.eval("game"), logger = w.eval("logger"), S = w.PieceSelector, doc = w.document;
+    const rng = S.mulberry32(11);
+    const playPiece = () => {
+      const flat = S.fromRows(game.board), type = game.currentPiece.type;
+      let opts = S.placements(flat, type).filter(p => S.score(flat, type, p) > S.TOPOUT_SCORE);
+      if (!opts.length) opts = S.placements(flat, type).filter(p => !p.above);
+      const vals = opts.map(p => S.score(flat, type, p)), m = Math.max(...vals);
+      const wts = vals.map(v => Math.exp((v - m) / 2)), z = wts.reduce((a, b) => a + b, 0);
+      let r = rng() * z, t = opts[opts.length - 1];
+      for (let i = 0; i < opts.length; i++) { r -= wts[i]; if (r < 0) { t = opts[i]; break; } }
+      for (let i = 0; i < t.rot; i++) game.rotatePiece();
+      const dir = Math.sign(t.x - game.currentPiece.x);
+      while (dir && game.currentPiece.x !== t.x) { const b = game.currentPiece.x; game.movePiece(dir); if (game.currentPiece.x === b) break; }
+      const id = game.currentPiece.piece_id;
+      while (game.currentPiece.piece_id === id) game.softDrop("participant");
+    };
+
+    doc.getElementById("practiceBtn").click();
+    for (let k = 0; k < 10; k++) playPiece();
+    game.endPractice();
+    doc.getElementById("startExperimentBtn").click();
+    for (let c = 0; c < 5; c++) {
+      for (let k = 0; k < 30; k++) playPiece();
+      game.endCondition();
+      doc.querySelectorAll("#ratingForm input[type=radio][value='4']").forEach(x => { x.checked = true; });
+      doc.getElementById("ratingForm").requestSubmit();
+    }
+
+    const ev = logger.events, dealt = ev.filter(e => e.event === "piece_dealt");
+    const play = ev.filter(e => e.phase === "play");
+    let replayed = 0, replayMismatch = 0;
+    const streams = {};
+    for (const e of dealt) (streams[`${e.phase}|${e.condition}|${e.dealer_seed}`] ||= []).push(e);
+    for (const list of Object.values(streams)) {
+      list.sort((a, b) => a.deal_index - b.deal_index);
+      const beta = typeof list[0].beta === "string" ? Number(list[0].beta) : list[0].beta;
+      const dealer = new S.Dealer({beta, seed: list[0].dealer_seed});
+      for (const e of list) {
+        const again = dealer.deal(S.fromRows(e.board_before.map(row => [...row].map(Number))), e.played_before);
+        if (again.type !== e.dealt || again.record.rng_draw !== e.rng_draw) replayMismatch++;
+        replayed++;
+      }
+    }
+    const summaries = logger.conditionSummaries.map(s => ({condition: s.condition, beta: s.beta, pieces_dealt: s.pieces_dealt, mean_dealt_helpfulness: s.mean_dealt_helpfulness, mean_placement_regret: s.mean_placement_regret, game_overs: s.game_overs}));
+    const intervals = [...new Set(play.map(e => e.drop_interval_ms))];
+    const selectorMs = dealt.map(e => e.selector_ms).sort((a, b) => a - b);
+    const report = {
+      phase_at_end: game.phase,
+      errors,
+      uploads_intercepted: uploads.length,
+      upload_hosts: [...new Set(uploads.map(u => new URL(u.url).host))],
+      drop_intervals_in_play: intervals,
+      deals: dealt.length, replayed, replay_mismatches: replayMismatch,
+      ratings_recorded: logger.ratings.length,
+      selector_ms_median: selectorMs[Math.floor(selectorMs.length / 2)],
+      selector_ms_max: selectorMs[selectorMs.length - 1],
+      condition_summaries: summaries
+    };
+    const ok = errors.length === 0 && game.phase === "complete" && intervals.length === 1 && intervals[0] === 467 &&
+      replayed > 0 && replayMismatch === 0 && logger.ratings.length === 5 && summaries.length === 5;
+    finish(ok, report);
+  } catch (err) {
+    finish(false, {exception: String(err && err.stack || err), errors});
+  }
+};
+</script>
+</body>
+</html>

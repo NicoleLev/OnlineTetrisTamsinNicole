@@ -1,0 +1,309 @@
+{
+ "rules": {
+  "max_pieces": 500,
+  "drop_interval_ms": 467,
+  "topout_rows": 2,
+  "selector_revision": "piece-selector-01",
+  "games_per_cell": 30,
+  "players": {
+   "skilled": 1,
+   "novice": 3
+  }
+ },
+ "results": [
+  {
+   "player": "novice",
+   "beta": "-Infinity",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 41,
+   "lines_per_100": 5.1849945998213,
+   "mean_helpfulness": 0.00041017227235438887,
+   "moves_per_piece": 3.059064807219032,
+   "rows_fallen": 9.698933552091878,
+   "szo_share": 0.8129614438063987,
+   "type_counts": {
+    "I": 66,
+    "L": 73,
+    "S": 320,
+    "T": 33,
+    "J": 56,
+    "O": 333,
+    "Z": 338
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "-4",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 48,
+   "lines_per_100": 10.32493128365916,
+   "mean_helpfulness": 0.1367444666666665,
+   "moves_per_piece": 3.222,
+   "rows_fallen": 9.448666666666666,
+   "szo_share": 0.6926666666666667,
+   "type_counts": {
+    "I": 116,
+    "T": 127,
+    "L": 115,
+    "Z": 326,
+    "O": 363,
+    "S": 350,
+    "J": 103
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "-2",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 66,
+   "lines_per_100": 16.712086663850524,
+   "mean_helpfulness": 0.27136807017543846,
+   "moves_per_piece": 3.4050125313283206,
+   "rows_fallen": 9.598496240601504,
+   "szo_share": 0.5528822055137844,
+   "type_counts": {
+    "I": 204,
+    "S": 338,
+    "L": 202,
+    "T": 250,
+    "Z": 373,
+    "O": 392,
+    "J": 236
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "0",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 125.5,
+   "lines_per_100": 26.577732837574445,
+   "mean_helpfulness": 0.48569549288350033,
+   "moves_per_piece": 3.4754876120189775,
+   "rows_fallen": 8.5917237743806,
+   "szo_share": 0.42409066947812335,
+   "type_counts": {
+    "I": 539,
+    "S": 534,
+    "L": 529,
+    "O": 571,
+    "Z": 504,
+    "J": 535,
+    "T": 582
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "2",
+   "games": 30,
+   "topped_out": 5,
+   "median_pieces": 500,
+   "lines_per_100": 38.16573911409791,
+   "mean_helpfulness": 0.7151759016275855,
+   "moves_per_piece": 3.5432709543270953,
+   "rows_fallen": 13.273535527353554,
+   "szo_share": 0.34523553452355343,
+   "type_counts": {
+    "I": 2158,
+    "J": 2399,
+    "L": 2269,
+    "O": 1797,
+    "S": 1487,
+    "Z": 1531,
+    "T": 2306
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "4",
+   "games": 30,
+   "topped_out": 1,
+   "median_pieces": 500,
+   "lines_per_100": 39.3047619047619,
+   "mean_helpfulness": 0.8594599550898119,
+   "moves_per_piece": 3.510342950462711,
+   "rows_fallen": 15.77157049537289,
+   "szo_share": 0.31341861731083287,
+   "type_counts": {
+    "I": 2521,
+    "J": 2611,
+    "L": 2603,
+    "O": 2141,
+    "T": 2355,
+    "Z": 1241,
+    "S": 1224
+   }
+  },
+  {
+   "player": "novice",
+   "beta": "Infinity",
+   "games": 30,
+   "topped_out": 0,
+   "median_pieces": 500,
+   "lines_per_100": 39.60666666666666,
+   "mean_helpfulness": 1,
+   "moves_per_piece": 3.3636666666666666,
+   "rows_fallen": 16.6022,
+   "szo_share": 0.3131333333333333,
+   "type_counts": {
+    "O": 3103,
+    "I": 3265,
+    "J": 2749,
+    "L": 2811,
+    "Z": 800,
+    "S": 794,
+    "T": 1478
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "-Infinity",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 44.5,
+   "lines_per_100": 6.916773418148702,
+   "mean_helpfulness": 0.0007434944237918215,
+   "moves_per_piece": 3.1055762081784386,
+   "rows_fallen": 9.727137546468402,
+   "szo_share": 0.8446096654275093,
+   "type_counts": {
+    "I": 70,
+    "L": 58,
+    "S": 394,
+    "Z": 371,
+    "O": 371,
+    "J": 48,
+    "T": 33
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "-4",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 65,
+   "lines_per_100": 16.68955673031727,
+   "mean_helpfulness": 0.1349853558627749,
+   "moves_per_piece": 3.227342549923195,
+   "rows_fallen": 9.614439324116743,
+   "szo_share": 0.6625704045058883,
+   "type_counts": {
+    "I": 162,
+    "T": 169,
+    "L": 177,
+    "J": 151,
+    "S": 446,
+    "O": 469,
+    "Z": 379
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "-2",
+   "games": 30,
+   "topped_out": 30,
+   "median_pieces": 117,
+   "lines_per_100": 26.406198624247217,
+   "mean_helpfulness": 0.2727346033551325,
+   "moves_per_piece": 3.337503554165482,
+   "rows_fallen": 9.754620415126528,
+   "szo_share": 0.5609894796701734,
+   "type_counts": {
+    "I": 385,
+    "S": 615,
+    "L": 386,
+    "Z": 676,
+    "T": 400,
+    "O": 682,
+    "J": 373
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "0",
+   "games": 30,
+   "topped_out": 0,
+   "median_pieces": 500,
+   "lines_per_100": 39.21999999999999,
+   "mean_helpfulness": 0.4800157466666667,
+   "moves_per_piece": 3.4764,
+   "rows_fallen": 14.522266666666667,
+   "szo_share": 0.42606666666666665,
+   "type_counts": {
+    "I": 2177,
+    "S": 2236,
+    "L": 2119,
+    "O": 2075,
+    "Z": 2080,
+    "J": 2139,
+    "T": 2174
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "2",
+   "games": 30,
+   "topped_out": 0,
+   "median_pieces": 500,
+   "lines_per_100": 39.679999999999986,
+   "mean_helpfulness": 0.7117088399999917,
+   "moves_per_piece": 3.4339333333333335,
+   "rows_fallen": 16.992866666666668,
+   "szo_share": 0.35506666666666664,
+   "type_counts": {
+    "I": 2398,
+    "J": 2514,
+    "L": 2471,
+    "T": 2291,
+    "S": 1520,
+    "O": 2189,
+    "Z": 1617
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "4",
+   "games": 30,
+   "topped_out": 0,
+   "median_pieces": 500,
+   "lines_per_100": 39.77333333333332,
+   "mean_helpfulness": 0.866941619999988,
+   "moves_per_piece": 3.3344666666666667,
+   "rows_fallen": 17.3774,
+   "szo_share": 0.3074,
+   "type_counts": {
+    "I": 3212,
+    "J": 2659,
+    "L": 2637,
+    "T": 1881,
+    "Z": 1074,
+    "O": 2417,
+    "S": 1120
+   }
+  },
+  {
+   "player": "skilled",
+   "beta": "Infinity",
+   "games": 30,
+   "topped_out": 0,
+   "median_pieces": 500,
+   "lines_per_100": 39.81999999999998,
+   "mean_helpfulness": 1,
+   "moves_per_piece": 3.0891333333333333,
+   "rows_fallen": 17.719533333333334,
+   "szo_share": 0.3292,
+   "type_counts": {
+    "O": 4023,
+    "I": 4588,
+    "J": 2570,
+    "L": 2447,
+    "S": 453,
+    "Z": 462,
+    "T": 457
+   }
+  }
+ ]
+}
