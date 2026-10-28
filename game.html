@@ -1,504 +1,66 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meta-T Tetris Game</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-        
-        .game-container {
-            background: #0f1419;
-            border-radius: 12px;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
-            padding: 20px;
-            max-width: 1200px;
-            width: 100%;
-        }
-        
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            padding-bottom: 15px;
-            border-bottom: 2px solid #0f3460;
-        }
-        
-        .game-title {
-            color: #fff;
-            font-size: 24px;
-            font-weight: bold;
-        }
-        
-        .participant-info {
-            color: #aaa;
-            font-size: 12px;
-            text-align: right;
-        }
-        
-        .participant-info .label {
-            color: #666;
-        }
-        
-        .participant-info .id {
-            color: #0f3460;
-            font-weight: bold;
-            font-family: 'Courier New', monospace;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: auto 1fr;
-            gap: 30px;
-            align-items: start;
-        }
-        
-        .game-board-wrapper {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        #gameCanvas {
-            border: 3px solid #0f3460;
-            background: #1a1a2e;
-            display: block;
-            border-radius: 6px;
-            width: 300px;
-            height: 600px;
-            image-rendering: pixelated;
-        }
-        
-        .sidebar {
-            display: flex;
-            flex-direction: column;
-            gap: 15px;
-        }
-        
-        .stats-box {
-            background: #1a1a2e;
-            border: 2px solid #0f3460;
-            border-radius: 6px;
-            padding: 15px;
-            color: #fff;
-            min-width: 180px;
-        }
-        
-        .stats-label {
-            color: #aaa;
-            font-size: 12px;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        
-        .stats-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #0f3460;
-        }
-        
-        .next-piece-box {
-            background: #1a1a2e;
-            border: 2px solid #0f3460;
-            border-radius: 6px;
-            padding: 15px;
-        }
-        
-        #nextPieceCanvas {
-            border: 1px solid #333;
-            background: #0a0a0e;
-            display: block;
-            width: 150px;
-            height: 100px;
-            border-radius: 4px;
-        }
-        
-        .controls {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-top: 20px;
-        }
-        
-        button {
-            padding: 12px;
-            background: #0f3460;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            font-size: 13px;
-            text-transform: uppercase;
-        }
-        
-        button:hover {
-            background: #1a4d7a;
-            transform: translateY(-2px);
-        }
-        
-        button:disabled {
-            background: #666;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        .settings {
-            background: #1a1a2e;
-            border: 2px solid #0f3460;
-            border-radius: 6px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        
-        .settings-label {
-            color: #aaa;
-            font-size: 11px;
-            text-transform: uppercase;
-            margin-bottom: 10px;
-            display: block;
-            font-weight: 600;
-        }
-        
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 10px;
-            color: #fff;
-            font-size: 13px;
-        }
-        
-        .checkbox-group input[type="checkbox"] {
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-            accent-color: #0f3460;
-        }
-        
-        .checkbox-group label {
-            cursor: pointer;
-        }
-        
-        select {
-            width: 100%;
-            padding: 8px;
-            background: #0a0a0e;
-            color: #fff;
-            border: 1px solid #0f3460;
-            border-radius: 4px;
-            font-size: 12px;
-        }
-        
-        #pauseOverlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        #pauseOverlay.hidden {
-            display: none;
-        }
-        
-        .pause-modal {
-            background: #1a1a2e;
-            border: 3px solid #0f3460;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            color: #fff;
-        }
-        
-        .pause-modal h2 {
-            font-size: 32px;
-            margin-bottom: 20px;
-        }
-        
-        .pause-modal p {
-            color: #aaa;
-            margin-bottom: 10px;
-        }
-        
-        #gameOverModal {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-        }
-        
-        #gameOverModal.hidden {
-            display: none;
-        }
-        
-        .game-over-modal {
-            background: #1a1a2e;
-            border: 3px solid #0f3460;
-            border-radius: 12px;
-            padding: 40px;
-            text-align: center;
-            color: #fff;
-            max-width: 400px;
-        }
-        
-        .game-over-modal h2 {
-            font-size: 32px;
-            margin-bottom: 20px;
-            color: #ff6b6b;
-        }
-        
-        .game-stats {
-            background: #0a0a0e;
-            border: 2px solid #0f3460;
-            border-radius: 6px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: left;
-        }
-        
-        .game-stat-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #0f3460;
-        }
-        
-        .game-stat-row:last-child {
-            border-bottom: none;
-        }
-        
-        .game-stat-label {
-            color: #aaa;
-        }
-        
-        .game-stat-value {
-            color: #0f3460;
-            font-weight: bold;
-            font-size: 18px;
-        }
-        
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-        }
-        
-        .modal-buttons button {
-            flex: 1;
-        }
-        
-        .status-message {
-            background: #1a1a2e;
-            border-left: 4px solid #0f3460;
-            padding: 15px;
-            margin-bottom: 20px;
-            border-radius: 4px;
-            color: #aaa;
-            font-size: 13px;
-        }
-        
-        .status-message.error {
-            border-left-color: #ff6b6b;
-            background: #3a1a1a;
-            color: #ff9999;
-        }
-        
-        .status-message.success {
-            border-left-color: #51cf66;
-            background: #1a3a1a;
-            color: #99ff99;
-        }
-        
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            #gameCanvas {
-                width: 250px;
-                height: 500px;
-            }
-            
-            .game-header {
-                flex-direction: column;
-                gap: 10px;
-                text-align: center;
-            }
-            
-            .participant-info {
-                text-align: center;
-            }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Meta-T Challenge–Frustration Study</title>
+  <link rel="stylesheet" href="experiment.css">
 </head>
 <body>
-    <div class="game-container">
-        <div class="game-header">
-            <div class="game-title">🎮 Meta-T Tetris</div>
-            <div class="participant-info">
-                <div><span class="label">Participant ID:</span> <span class="id" id="displayParticipantId">---</span></div>
-            </div>
+<main>
+  <section id="welcomeScreen" class="screen card">
+    <h1>Meta-T Research Prototype</h1>
+    <p>Participant ID: <code id="participantId"></code></p>
+    <p>This is HMM instrumentation pilot version 0.8. It contains a practice period followed by five two-minute difficulty conditions.</p>
+    <button id="practiceBtn">Start practice</button>
+  </section>
+
+  <section id="experimentIntro" class="screen card hidden">
+    <h1>Practice complete</h1>
+    <p>The experiment contains five conditions of two minutes each. After each condition you will answer three brief ratings (challenge, enjoyment and frustration).</p>
+    <button id="startExperimentBtn">Start experiment</button>
+  </section>
+
+  <section id="gameScreen" class="screen hidden">
+    <div class="game-layout">
+      <div class="board-wrap">
+        <canvas id="gameCanvas" width="300" height="600"></canvas>
+        <div id="gameOverNotice" class="game-over-notice hidden" role="status" aria-live="polite">
+          <strong>Game over</strong>
+          <span>New attempt — same difficulty condition</span>
         </div>
-        
-        <div id="statusMessage" class="status-message" style="display: none;"></div>
-        
-        <div class="main-content">
-            <div class="game-board-wrapper">
-                <canvas id="gameCanvas" width="300" height="600"></canvas>
-                <div class="controls">
-                    <button id="startBtn">Start Game</button>
-                    <button id="resetBtn">Reset</button>
-                </div>
-            </div>
-            
-            <div class="sidebar">
-                <div class="stats-box">
-                    <div class="stats-label">Score</div>
-                    <div class="stats-value" id="score">0</div>
-                </div>
-                
-                <div class="stats-box">
-                    <div class="stats-label">Level</div>
-                    <div class="stats-value" id="level">1</div>
-                </div>
-                
-                <div class="stats-box">
-                    <div class="stats-label">Lines</div>
-                    <div class="stats-value" id="lines">0</div>
-                </div>
-                
-                <div class="next-piece-box">
-                    <div class="stats-label">Next Piece</div>
-                    <canvas id="nextPieceCanvas" width="150" height="100"></canvas>
-                </div>
-                
-                <div class="settings">
-                    <label class="settings-label">Display Options</label>
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="ghostPiece" checked>
-                        <label for="ghostPiece">Ghost Piece</label>
-                    </div>
-                    <label class="settings-label" style="margin-top: 10px;">Gravity</label>
-                    <select id="gravitySelect">
-                        <option value="normal">Normal</option>
-                        <option value="fast">Fast</option>
-                        <option value="slow">Slow</option>
-                    </select>
-                </div>
-            </div>
-        </div>
+      </div>
+      <aside class="card stats">
+        <h2>Study</h2>
+        <div>Condition <strong id="condition">—</strong></div>
+        <div>Time <strong id="timer">—</strong></div>
+        <div>Drop interval <strong id="speed">—</strong></div>
+        <hr>
+        <div>Score <strong id="score">0</strong></div>
+        <div>Lines <strong id="lines">0</strong></div>
+        <div>Attempt <strong id="attempt">1</strong></div>
+        <h3>Next</h3>
+        <canvas id="nextPieceCanvas" width="120" height="120"></canvas>
+        <p class="small">Hold ← / → to move continuously · ↑ rotate · hold ↓ to soft drop</p>
+      </aside>
     </div>
+  </section>
+
+  <section id="ratingScreen" class="screen card hidden">
+    <h1>Level <span id="ratingCondition"></span> complete</h1>
+    <p>Answer all questions about the level you have just played.</p>
     
-    <div id="pauseOverlay" class="hidden">
-        <div class="pause-modal">
-            <h2>PAUSED</h2>
-            <p>Press P to resume</p>
-        </div>
-    </div>
-    
-    <div id="gameOverModal" class="hidden">
-        <div class="game-over-modal">
-            <h2>GAME OVER</h2>
-            <div class="game-stats">
-                <div class="game-stat-row">
-                    <span class="game-stat-label">Final Score:</span>
-                    <span class="game-stat-value" id="finalScore">0</span>
-                </div>
-                <div class="game-stat-row">
-                    <span class="game-stat-label">Lines Cleared:</span>
-                    <span class="game-stat-value" id="finalLines">0</span>
-                </div>
-                <div class="game-stat-row">
-                    <span class="game-stat-label">Level Reached:</span>
-                    <span class="game-stat-value" id="finalLevel">0</span>
-                </div>
-            </div>
-            <div class="modal-buttons">
-                <button id="restartBtn">Play Again</button>
-                <button id="nextBtn">Next</button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Google API for Drive integration -->
-    <script src="https://apis.google.com/js/api.js"></script>
-    
-    <!-- Telemetry and consent utilities -->
-    <script src="telemetry.js"></script>
-    
-    <!-- Game engine -->
-    <script src="game.js"></script>
-    
-    <!-- Consent check and initialization -->
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if participant has consented
-            const participantId = sessionStorage.getItem('participantId');
-            const consentGiven = sessionStorage.getItem('consentGiven');
-            
-            if (!participantId || consentGiven !== 'true') {
-                // Redirect to consent page
-                window.location.href = 'consent.html';
-                return;
-            }
-            
-            // Display participant ID
-            document.getElementById('displayParticipantId').textContent = participantId;
-            
-            // Initialize telemetry system
-            if (typeof TelemetrySystem !== 'undefined') {
-                window.telemetrySystem = new TelemetrySystem(participantId);
-                window.telemetrySystem.initialize().then(function() {
-                    console.log('Telemetry system initialized for participant:', participantId);
-                    showStatus('Connected to data sync service', 'success');
-                }).catch(function(error) {
-                    console.error('Telemetry initialization error:', error);
-                    showStatus('Warning: Data sync unavailable. Game will continue with local storage.', 'error');
-                });
-            }
-        });
-        
-        function showStatus(message, type = 'info') {
-            const statusEl = document.getElementById('statusMessage');
-            statusEl.textContent = message;
-            statusEl.className = 'status-message ' + type;
-            statusEl.style.display = 'block';
-            
-            if (type === 'success') {
-                setTimeout(() => {
-                    statusEl.style.display = 'none';
-                }, 3000);
-            }
-        }
-    </script>
+    <form id="ratingForm"><div id="questionnaireItems"></div><button type="submit">Continue</button></form>
+  </section>
+  <section id="completeScreen" class="screen card hidden">
+    <h1>Pilot complete</h1>
+    <p>Thank you for completing the five Tetris levels and three ratings after each level.</p>
+    <p id="uploadStatus" role="status" aria-live="polite">Submitting your responses…</p>
+    <button id="retryUploadBtn" class="hidden">Retry submission</button>
+    <button id="finishBtn" disabled>Finish</button>
+  </section>
+</main>
+<script src="piece_selector.js?v=piece-selection-08"></script>
+<script src="game.js?v=piece-selection-08"></script>
 </body>
 </html>
